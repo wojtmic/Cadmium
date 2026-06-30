@@ -121,6 +121,18 @@ public final class Cadmium extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        getDataFolder().mkdirs();
+        Path dataPath = getDataFolder().toPath();
+        try {
+            Path mainPy = dataPath.resolve("main.py");
+            if (!Files.exists(mainPy)) Files.createFile(mainPy);
+            Path requirementsTxt = dataPath.resolve("requirements.txt");
+            if (!Files.exists(requirementsTxt)) Files.createFile(requirementsTxt);
+        } catch (IOException e) {
+            getComponentLogger().error("Failed to create default files: " + e.getMessage());
+            return;
+        }
+
         reload();
         getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS, event -> {
             event.registrar().register(
