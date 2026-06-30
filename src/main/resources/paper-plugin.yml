@@ -1,0 +1,7 @@
+name: Cadmium
+version: '${version}'
+
+main: dev.wojtmic.cadmium.Cadmium
+loader: dev.wojtmic.cadmium.CadmiumLoader
+api-version: '26.1.2'
+load: POSTWORLD
