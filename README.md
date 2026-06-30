@@ -5,7 +5,7 @@ Cadmium is a scripting plugin for Minecraft, much like [Skript](https://modrinth
 ![bukkit](https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/cozy/unsupported/spigot_vector.svg)
 
 [![github](https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/cozy/available/github_vector.svg)](https://github.com/wojtmic/Cadmium)
-[![hangar](https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/cozy/available/hangar_vector.svg)]([https://modrinth.com/projects/cadmium-code](https://hangar.papermc.io/wojtmic/cadmium))
+[![hangar](https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/cozy/available/hangar_vector.svg)](https://hangar.papermc.io/wojtmic/cadmium)
 [![modrinth](https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/cozy/available/modrinth_vector.svg)](https://modrinth.com/projects/cadmium-code)
 
 # Features
