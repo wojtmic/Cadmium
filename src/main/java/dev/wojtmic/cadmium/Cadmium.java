@@ -32,8 +32,6 @@ public final class Cadmium extends JavaPlugin {
         if (commandManager == null) {
             commandManager = new CommandManager(getLogger());
         } else {
-            // Null out Python executors before closing the context so any command
-            // called during reload gets a safe message instead of a closed-context crash.
             commandManager.startReload();
         }
         if (context != null) {

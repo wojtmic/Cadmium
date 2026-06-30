@@ -119,7 +119,6 @@ public class UvManager {
                 new GZIPInputStream(Files.newInputStream(archive)))) {
             TarArchiveEntry entry;
             while ((entry = tar.getNextEntry()) != null) {
-                // uv tarball contains uv-x86_64-.../uv — just match the filename
                 if (entry.getName().endsWith("/" + entryName) || entry.getName().equals(entryName)) {
                     Files.copy(tar, dest, StandardCopyOption.REPLACE_EXISTING);
                     return;

@@ -18,9 +18,6 @@ public class CommandManager {
     private final Map<String, CadmiumCommand> registered = new HashMap<>();
     private final Logger logger;
 
-    // Non-null while a reload is in progress.
-    // Contains the names of commands that existed before the reload and haven't
-    // been re-registered yet; any still present after finishReload() get removed.
     private Set<String> reloadPending = null;
     private boolean structuralChange = false;
 
@@ -37,11 +34,6 @@ public class CommandManager {
         List<String> complete(CommandSender sender, String label, String[] args);
     }
 
-    /**
-     * Begin a reload cycle. Existing commands are kept alive in the brigadier
-     * tree but their executors are nulled so any in-flight call during reload
-     * gets a safe "reloading" response instead of hitting the closed context.
-     */
     public void startReload() {
         reloadPending = new HashSet<>(registered.keySet());
         structuralChange = false;
@@ -67,7 +59,6 @@ public class CommandManager {
             reloadPending.remove(key);
             CadmiumCommand existing = registered.get(key);
             if (existing != null) {
-                // Update in place — the brigadier node already points here, no re-registration needed.
                 existing.executor = executor;
                 existing.completer = completer;
                 return;
@@ -75,17 +66,11 @@ public class CommandManager {
             structuralChange = true;
         }
 
-        // First-time registration (or new command added during reload).
         CadmiumCommand cmd = new CadmiumCommand(name, executor, completer);
         commandMap.register("cadmium", cmd);
         registered.put(key, cmd);
     }
 
-    /**
-     * End a reload cycle. Removes commands that were not re-registered by
-     * the new script, and returns true if the brigadier tree needs a sync
-     * (i.e. commands were added or removed, not merely updated).
-     */
     public boolean finishReload() {
         if (reloadPending == null) return false;
         for (String name : reloadPending) {
