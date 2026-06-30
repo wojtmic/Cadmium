@@ -1,10 +1,12 @@
 plugins {
     id("java-library")
     id("xyz.jpenilla.run-paper") version "3.0.2"
+    id("com.gradleup.shadow") version "9.4.3"
 }
 
 repositories {
     mavenCentral()
+    gradlePluginPortal()
     maven("https://repo.papermc.io/repository/maven-public/")
 }
 
