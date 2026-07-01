@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.PosixFilePermission;
+import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
 import java.util.zip.GZIPInputStream;
@@ -18,6 +19,9 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+
+import static dev.wojtmic.cadmium.Cadmium.autoSync;
+import static dev.wojtmic.cadmium.Cadmium.uvOverride;
 
 public class UvManager {
 
@@ -35,37 +39,55 @@ public class UvManager {
     }
 
     public void setup() throws IOException, InterruptedException {
-        uvBinary = dataFolder.resolve(isWindows() ? "uv.exe" : "uv").toAbsolutePath();
-
-        if (!Files.exists(uvBinary)) {
-            logger.info("[Cadmium] Downloading uv...");
-            downloadUv();
-            logger.info("[Cadmium] uv downloaded.");
+        switch (uvOverride) {
+            case "auto" -> {
+                if (isWindows()) {
+                    uvBinary = Path.of(runProcess("where", "uv"));
+                } else {
+                    uvBinary = Path.of(runProcess("which", "uv"));
+                }
+                if (!Files.exists(uvBinary)) {
+                    if (!Files.exists(uvBinary)) {
+                        logger.info("[Cadmium] Downloading uv...");
+                        downloadUv();
+                        logger.info("[Cadmium] uv downloaded.");
+                    }
+                }
+            }
+            case "download" -> {
+                uvBinary = dataFolder.resolve(isWindows() ? "uv.exe" : "uv").toAbsolutePath();
+                if (!Files.exists(uvBinary)) {
+                    logger.info("[Cadmium] Downloading uv...");
+                    downloadUv();
+                    logger.info("[Cadmium] uv downloaded.");
+                }
+            }
+            case "system" -> {
+                if (isWindows()) {
+                    uvBinary = Path.of(runProcess("where", "uv"));
+                } else {
+                    uvBinary = Path.of(runProcess("which", "uv"));
+                }
+                if (!Files.exists(uvBinary)) {
+                    logger.severe("[Cadmium] uv isn't installed! Change uv-path or install uv system-wide.");
+                }
+            }
+            default -> uvBinary = Path.of(uvOverride);
         }
 
-        Path venv = dataFolder.resolve(".venv").toAbsolutePath();
-        if (!Files.exists(venv)) {
-            logger.info("[Cadmium] Creating venv...");
-            runProcess(uvBinary.toString(), "venv", venv.toString());
-            logger.info("[Cadmium] Venv created.");
-        }
-
-        Path requirements = dataFolder.resolve("requirements.txt").toAbsolutePath();
-        if (Files.exists(requirements)) {
-            logger.info("[Cadmium] Installing requirements...");
-            runProcess(uvBinary.toString(), "pip", "install",
-                    "-r", requirements.toString(),
-                    "--python", venv.toString());
-            logger.info("[Cadmium] Requirements installed.");
+        if (autoSync) {
+            logger.info("[Cadmium] Syncing Python Project...");
+            runProcess(uvBinary.toString(), "sync");
+            logger.info("[Cadmium] Sync complete.");
         }
     }
 
     public Path getSitePackages() {
         Path venv = dataFolder.resolve(".venv").toAbsolutePath();
-        // GraalPy is Python 3.12
+
         Path lib = venv.resolve("lib").resolve("python3.12").resolve("site-packages");
         if (Files.exists(lib)) return lib;
-        // Windows layout
+
         return venv.resolve("Lib").resolve("site-packages");
     }
 
@@ -141,16 +163,23 @@ public class UvManager {
         throw new IOException("Could not find '" + entryName + "' in zip archive");
     }
 
-    private void runProcess(String... command) throws IOException, InterruptedException {
+    private String runProcess(String... command) throws IOException, InterruptedException {
         Process process = new ProcessBuilder(command)
                 .directory(dataFolder.toFile())
-                .inheritIO()
+                .redirectErrorStream(false)
                 .start();
-        int exit = process.waitFor();
-        if (exit != 0) {
-            throw new IOException("Command failed with exit code " + exit + ": "
-                    + String.join(" ", command));
+
+        String output;
+        try (var reader = process.inputReader()) {
+            output = reader.readLine();
         }
+
+        int exit = process.waitFor();
+        if (exit != 0 || output == null || output.isBlank()) {
+            throw new IOException("Command failed to locate uv: " + String.join(" ", command));
+        }
+
+        return output.trim();
     }
 
     private String getUvFilename() {

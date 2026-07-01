@@ -12,6 +12,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 
+import static dev.wojtmic.cadmium.Cadmium.commandPrefix;
+
 public class CommandManager {
 
     private final CommandMap commandMap;
@@ -67,7 +69,7 @@ public class CommandManager {
         }
 
         CadmiumCommand cmd = new CadmiumCommand(name, executor, completer);
-        commandMap.register("cadmium", cmd);
+        commandMap.register(commandPrefix, cmd);
         registered.put(key, cmd);
     }
 

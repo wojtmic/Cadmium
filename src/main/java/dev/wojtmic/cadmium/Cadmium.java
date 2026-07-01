@@ -17,6 +17,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.jar.JarFile;
+import com.moandjiezana.toml.Toml;
 
 public final class Cadmium extends JavaPlugin {
 
@@ -24,7 +25,11 @@ public final class Cadmium extends JavaPlugin {
     private Bridge bridge;
     private CommandManager commandManager;
 
-    public void reload() {
+    public static String commandPrefix = "cadmium";
+    public static String uvOverride = "auto";
+    public static boolean autoSync = true;
+
+    public void reload(boolean failFast, String entrypoint) {
         if (bridge != null) {
             HandlerList.unregisterAll(bridge);
             bridge = null;
@@ -40,12 +45,14 @@ public final class Cadmium extends JavaPlugin {
         }
 
         UvManager uv = new UvManager(getDataFolder(), getLogger());
-        try {
-            uv.setup();
-        } catch (IOException | InterruptedException e) {
-            getComponentLogger().error("An exception occurred while setting up uv:");
-            getComponentLogger().error(e.toString());
-            return;
+        if (autoSync) {
+            try {
+                uv.setup();
+            } catch (IOException | InterruptedException e) {
+                getComponentLogger().error("An exception occurred while setting up uv:");
+                getComponentLogger().error(e.toString());
+                return;
+            }
         }
 
         Path bundledPython;
@@ -74,7 +81,7 @@ public final class Cadmium extends JavaPlugin {
             context.getBindings("python").putMember("_command_manager", commandManager);
             context.eval("python", "import builtins; builtins._command_manager = _command_manager");
 
-            Path script = getDataFolder().toPath().resolve("main.py");
+            Path script = getDataFolder().toPath().resolve(entrypoint);
             context.eval(Source.newBuilder("python", script.toFile()).build());
 
             bridge = new Bridge(context);
@@ -93,6 +100,10 @@ public final class Cadmium extends JavaPlugin {
             commandManager.finishReload();
             getComponentLogger().error("An exception occurred while loading Python:");
             getComponentLogger().error(e.getMessage());
+            if (failFast) {
+                getComponentLogger().error("Because of Cadmium config, shutting down server due to script loading failure!");
+                getServer().shutdown();
+            }
         }
     }
 
@@ -127,27 +138,113 @@ public final class Cadmium extends JavaPlugin {
         try {
             Path mainPy = dataPath.resolve("main.py");
             if (!Files.exists(mainPy)) Files.createFile(mainPy);
-            Path requirementsTxt = dataPath.resolve("requirements.txt");
-            if (!Files.exists(requirementsTxt)) Files.createFile(requirementsTxt);
+
+            Path pyproject = dataPath.resolve("pyproject.toml");
+            if (!Files.exists(pyproject)) {
+                Files.createFile(pyproject);
+                String content = """
+                        [project]
+                        name = "cadmium-server-scripts"
+                        version = "0.1.0"
+                        description = "CHANGEME"
+                        
+                        requires-python = "==3.12.*" # DO NOT CHANGE THIS! Cadmium will ONLY work with Python 3.12
+                        dependencies = [] # Recommended to add dependencies with `uv add`
+                        
+                        [tool.uv]
+                        managed = true
+                        
+                        # main Cadmium configuration
+                        # requires a server restart to reload
+                        [tool.cadmium]
+                        # will abort server start if main file loading fails with an error
+                        # recommended to turn on in public production
+                        # default: false
+                        abort-start-on-fail = false
+                        # will shut down server if reload fails
+                        # default: false
+                        shutdown-on-reload-fail = false
+                        # if disabled the /cadmium (/cad) command will not be registered
+                        # default: true
+                        enable-cad-command = true
+                        # controls which .py file to load as main
+                        # default: main.py
+                        main-code = "main.py"
+                        # if disabled will not sync (manage dependencies) automatically
+                        # default: true
+                        auto-sync = true
+                        # will force path of uv binary that Cadmium will use
+                        # if set and binary not found, Cadmium will not load
+                        # if set to auto, will use the system-wide uv installation or download a binary automatically if not found
+                        # if set to download, will always download binary
+                        # if set to system, will always use system
+                        # default: auto
+                        uv-path = "auto"
+                        # primary fallback prefix used for script-registered commands\s
+                        # (e.g. /<prefix>:<command>)
+                        # default: cadmium
+                        command-prefix = "cadmium"
+                        """;
+
+                try {
+                    Files.writeString(pyproject, content);
+                } catch (IOException e) {
+                    getComponentLogger().error("Unable to write default configuration!");
+                }
+            }
+
+
         } catch (IOException e) {
             getComponentLogger().error("Failed to create default files: " + e.getMessage());
             return;
         }
 
-        reload();
-        getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS, event -> {
-            event.registrar().register(
-                    Commands.literal("cad")
-                            .then(Commands.literal("reload")
-                                    .executes(ctx -> {
-                                        reload();
-                                        Component msg = MiniMessage.miniMessage().deserialize("<green>Reloaded!");
-                                        ctx.getSource().getSender().sendMessage(msg);
-                                        return 1;
-                                    }))
-                            .build()
-            );
-        });
+        Path pyproject = dataPath.resolve("pyproject.toml");
+        Toml toml = new Toml().read(pyproject.toFile());
+
+        boolean failFast = toml.getBoolean("tool.cadmium.abort-start-on-fail", false);
+        boolean failReload = toml.getBoolean("tool.cadmium.shutdown-on-reload-fail", false);
+        boolean cadCommand = toml.getBoolean("tool.cadmium.enable-cad-command", true);
+        boolean autoSync = toml.getBoolean("tool.cadmium.auto-sync", true);
+        String entrypoint = toml.getString("tool.cadmium.main-code", "main.py");
+        String uvOverride = toml.getString("tool.cadmium.uv-path", "auto");
+        String commandPrefix = toml.getString("tool.cadmium.command-prefix", "cadmium");
+
+        Cadmium.commandPrefix = commandPrefix;
+        Cadmium.autoSync = autoSync;
+        Cadmium.uvOverride = uvOverride;
+
+        reload(failFast, entrypoint);
+
+        if (cadCommand) {
+            getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS, event -> {
+                var reloadNode = Commands.literal("reload")
+                        .executes(ctx -> {
+                            reload(failReload, entrypoint);
+                            Component msg = MiniMessage.miniMessage().deserialize("<green>Reloaded!");
+                            ctx.getSource().getSender().sendMessage(msg);
+                            return 1;
+                        });
+
+                java.util.function.Predicate<io.papermc.paper.command.brigadier.CommandSourceStack> hasPerm =
+                        source -> source.getSender().hasPermission("cadmium.admin");
+
+                event.registrar().register(
+                        Commands.literal("cadmium")
+                                .requires(hasPerm)
+                                .then(reloadNode)
+                                .build()
+                );
+
+                event.registrar().register(
+                        Commands.literal("cad")
+                                .requires(hasPerm)
+                                .then(reloadNode)
+                                .build()
+                );
+            });
+        }
+
     }
 
     @Override
