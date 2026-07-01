@@ -1,7 +1,10 @@
 from enum import Enum
-from cadmium.event import Event
-from cadmium.player import Player
+from cadmium.event import *
+from cadmium.player import *
 from cadmium.command import *
+from cadmium.location import *
+from cadmium.block import *
+from cadmium.data import *
 
 class EVENTS(Enum):
     player_join = "player_join"

@@ -61,6 +61,7 @@ public final class Cadmium extends JavaPlugin {
                 .allowAllAccess(true)
                 .option("python.PosixModuleBackend", "native")
                 .hostClassLoader(getClassLoader())
+                .allowHostClassLookup(className -> true)
                 .build();
 
         try {
