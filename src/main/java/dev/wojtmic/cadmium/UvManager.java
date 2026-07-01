@@ -1,6 +1,5 @@
 package dev.wojtmic.cadmium;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -11,17 +10,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.PosixFilePermission;
-import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
-import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 
 import static dev.wojtmic.cadmium.Cadmium.autoSync;
 import static dev.wojtmic.cadmium.Cadmium.uvOverride;
+import static dev.wojtmic.cadmium.Utils.*;
 
 public class UvManager {
 
@@ -29,12 +23,10 @@ public class UvManager {
     private static final String UV_BASE_URL =
             "https://releases.astral.sh/github/uv/releases/download/" + UV_VERSION + "/";
 
-    private final Path dataFolder;
     private final Logger logger;
     private Path uvBinary;
 
-    public UvManager(File dataFolder, Logger logger) {
-        this.dataFolder = dataFolder.toPath();
+    public UvManager(Logger logger) {
         this.logger = logger;
     }
 
@@ -47,7 +39,7 @@ public class UvManager {
                     uvBinary = Path.of(runProcess("which", "uv"));
                 }
                 if (!Files.exists(uvBinary)) {
-                    uvBinary = dataFolder.resolve(isWindows() ? "uv.exe" : "uv").toAbsolutePath();
+                    uvBinary = Cadmium.dataFolder.toPath().resolve(isWindows() ? "uv.exe" : "uv").toAbsolutePath();
                     if (!Files.exists(uvBinary)) {
                         logger.info("[Cadmium] Downloading uv...");
                         downloadUv();
@@ -59,7 +51,7 @@ public class UvManager {
                 }
             }
             case "download" -> {
-                uvBinary = dataFolder.resolve(isWindows() ? "uv.exe" : "uv").toAbsolutePath();
+                uvBinary = Cadmium.dataFolder.toPath().resolve(isWindows() ? "uv.exe" : "uv").toAbsolutePath();
                 if (!Files.exists(uvBinary)) {
                     logger.info("[Cadmium] Downloading uv...");
                     downloadUv();
@@ -89,7 +81,7 @@ public class UvManager {
     }
 
     public Path getSitePackages() {
-        Path venv = dataFolder.resolve(".venv").toAbsolutePath();
+        Path venv = Cadmium.dataFolder.toPath().resolve(".venv").toAbsolutePath();
 
         Path lib = venv.resolve("lib").resolve("python3.12").resolve("site-packages");
         if (Files.exists(lib)) return lib;
@@ -108,7 +100,7 @@ public class UvManager {
                 .uri(URI.create(url))
                 .build();
 
-        Path tmp = dataFolder.resolve("uv_download_tmp");
+        Path tmp = Cadmium.dataFolder.toPath().resolve("uv_download_tmp");
         try {
             HttpResponse<InputStream> response = client.send(
                     request, HttpResponse.BodyHandlers.ofInputStream());
@@ -140,52 +132,6 @@ public class UvManager {
                     PosixFilePermission.OTHERS_EXECUTE
             ));
         }
-    }
-
-    private void extractFromTarGz(Path archive, String entryName, Path dest) throws IOException {
-        try (TarArchiveInputStream tar = new TarArchiveInputStream(
-                new GZIPInputStream(Files.newInputStream(archive)))) {
-            TarArchiveEntry entry;
-            while ((entry = tar.getNextEntry()) != null) {
-                if (entry.getName().endsWith("/" + entryName) || entry.getName().equals(entryName)) {
-                    Files.copy(tar, dest, StandardCopyOption.REPLACE_EXISTING);
-                    return;
-                }
-            }
-        }
-        throw new IOException("Could not find '" + entryName + "' in tar.gz archive");
-    }
-
-    private void extractFromZip(Path archive, String entryName, Path dest) throws IOException {
-        try (ZipInputStream zip = new ZipInputStream(Files.newInputStream(archive))) {
-            ZipEntry entry;
-            while ((entry = zip.getNextEntry()) != null) {
-                if (entry.getName().endsWith("/" + entryName) || entry.getName().equals(entryName)) {
-                    Files.copy(zip, dest, StandardCopyOption.REPLACE_EXISTING);
-                    return;
-                }
-            }
-        }
-        throw new IOException("Could not find '" + entryName + "' in zip archive");
-    }
-
-    private String runProcess(String... command) throws IOException, InterruptedException {
-        Process process = new ProcessBuilder(command)
-                .directory(dataFolder.toFile())
-                .redirectErrorStream(false)
-                .start();
-
-        String output;
-        try (var reader = process.inputReader()) {
-            output = reader.readLine();
-        }
-
-        int exit = process.waitFor();
-        if (exit != 0 || output == null || output.isBlank()) {
-            throw new IOException("Command failed to locate uv: " + String.join(" ", command));
-        }
-
-        return output.trim();
     }
 
     private String getUvFilename() {

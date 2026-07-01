@@ -10,6 +10,7 @@ import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Source;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
@@ -25,6 +26,7 @@ public final class Cadmium extends JavaPlugin {
     private Bridge bridge;
     private CommandManager commandManager;
 
+    public static File dataFolder;
     public static String commandPrefix = "cadmium";
     public static String uvOverride = "auto";
     public static boolean autoSync = true;
@@ -44,7 +46,7 @@ public final class Cadmium extends JavaPlugin {
             context = null;
         }
 
-        UvManager uv = new UvManager(getDataFolder(), getLogger());
+        UvManager uv = new UvManager(getLogger());
         if (autoSync) {
             try {
                 uv.setup();
@@ -133,8 +135,9 @@ public final class Cadmium extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        getDataFolder().mkdirs();
-        Path dataPath = getDataFolder().toPath();
+        dataFolder = getDataFolder();
+        dataFolder.mkdirs();
+        Path dataPath = dataFolder.toPath();
         try {
             Path mainPy = dataPath.resolve("main.py");
             if (!Files.exists(mainPy)) Files.createFile(mainPy);
