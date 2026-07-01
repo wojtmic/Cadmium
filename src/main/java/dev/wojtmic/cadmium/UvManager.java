@@ -47,11 +47,15 @@ public class UvManager {
                     uvBinary = Path.of(runProcess("which", "uv"));
                 }
                 if (!Files.exists(uvBinary)) {
+                    uvBinary = dataFolder.resolve(isWindows() ? "uv.exe" : "uv").toAbsolutePath();
                     if (!Files.exists(uvBinary)) {
                         logger.info("[Cadmium] Downloading uv...");
                         downloadUv();
                         logger.info("[Cadmium] uv downloaded.");
                     }
+                    logger.info("[Cadmium] Using self-installed uv.");
+                } else {
+                    logger.info("[Cadmium] Using system uv.");
                 }
             }
             case "download" -> {
@@ -61,6 +65,7 @@ public class UvManager {
                     downloadUv();
                     logger.info("[Cadmium] uv downloaded.");
                 }
+                logger.info("[Cadmium] Using self-installed uv.");
             }
             case "system" -> {
                 if (isWindows()) {
@@ -71,6 +76,7 @@ public class UvManager {
                 if (!Files.exists(uvBinary)) {
                     logger.severe("[Cadmium] uv isn't installed! Change uv-path or install uv system-wide.");
                 }
+                logger.info("[Cadmium] Using system uv.");
             }
             default -> uvBinary = Path.of(uvOverride);
         }
