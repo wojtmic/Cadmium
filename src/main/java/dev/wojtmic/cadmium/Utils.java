@@ -51,10 +51,11 @@ public class Utils {
         }
 
         int exit = process.waitFor();
-        if (exit != 0 || output == null || output.isBlank()) {
-            throw new IOException("Command failed to locate: " + String.join(" ", command));
+        if (exit != 0) {
+            throw new IOException("Command failed (exit " + exit + "): " + String.join(" ", command));
         }
 
-        return output.trim();
+        return output == null ? "" : output.trim();
     }
+
 }

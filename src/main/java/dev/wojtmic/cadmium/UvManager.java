@@ -2,6 +2,7 @@ package dev.wojtmic.cadmium;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -11,6 +12,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.Set;
+import java.util.jar.JarFile;
 import java.util.logging.Logger;
 
 import static dev.wojtmic.cadmium.Cadmium.autoSync;
@@ -25,6 +27,7 @@ public class UvManager {
 
     private final Logger logger;
     private Path uvBinary;
+    private Path bundledPython;
 
     public UvManager(Logger logger) {
         this.logger = logger;
@@ -78,6 +81,8 @@ public class UvManager {
             runProcess(uvBinary.toString(), "sync");
             logger.info("[Cadmium] Sync complete.");
         }
+
+        bundledPython = extractBundledPython();
     }
 
     public Path getSitePackages() {
@@ -87,6 +92,34 @@ public class UvManager {
         if (Files.exists(lib)) return lib;
 
         return venv.resolve("Lib").resolve("site-packages");
+    }
+
+    public Path getBundledPython() {
+        return bundledPython;
+    }
+
+    private Path extractBundledPython() throws IOException {
+        Path dest = Cadmium.dataFolder.toPath().resolve(".cadmium_bundle");
+        Files.createDirectories(dest);
+        try (JarFile jar = new JarFile(Cadmium.pluginFile)) {
+            jar.stream()
+                .filter(e -> e.getName().startsWith("python/") && !e.isDirectory())
+                .forEach(e -> {
+                    try {
+                        String relative = e.getName().substring("python/".length());
+                        Path target = dest.resolve(relative);
+                        Files.createDirectories(target.getParent());
+                        try (InputStream is = jar.getInputStream(e)) {
+                            Files.copy(is, target, StandardCopyOption.REPLACE_EXISTING);
+                        }
+                    } catch (IOException ex) {
+                        throw new UncheckedIOException(ex);
+                    }
+                });
+        } catch (UncheckedIOException e) {
+            throw e.getCause();
+        }
+        return dest;
     }
 
     private void downloadUv() throws IOException {
