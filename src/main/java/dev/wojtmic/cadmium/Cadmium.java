@@ -173,14 +173,14 @@ public final class Cadmium extends JavaPlugin {
                         # if disabled will not sync (manage dependencies) automatically
                         # default: true
                         auto-sync = true
-                        # will force path of uv binary that Cadmium will use
-                        # if set and binary not found, Cadmium will not load
-                        # if set to auto, will use the system-wide uv installation or download a binary automatically if not found
-                        # if set to download, will always download binary
-                        # if set to system, will always use system
+                        # path to the uv binary Cadmium will use to manage dependencies
+                        # set to "auto" to use a system-wide uv install, downloading a binary if none is found
+                        # set to "system" to always use a system-wide uv install (Cadmium will not load if not found)
+                        # set to "download" to always use a Cadmium-downloaded binary
+                        # set to an explicit path to force that binary (Cadmium will not load if it's not found)
                         # default: auto
                         uv-path = "auto"
-                        # primary fallback prefix used for script-registered commands\s
+                        # primary fallback prefix used for script-registered commands
                         # (e.g. /<prefix>:<command>)
                         # default: cadmium
                         command-prefix = "cadmium"
