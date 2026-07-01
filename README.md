@@ -6,7 +6,7 @@ Cadmium is a scripting plugin for Minecraft, much like [Skript](https://modrinth
 
 [![github](https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/cozy/available/github_vector.svg)](https://github.com/wojtmic/Cadmium)
 [![hangar](https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/cozy/available/hangar_vector.svg)](https://hangar.papermc.io/wojtmic/cadmium)
-[![modrinth](https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/cozy/available/modrinth_vector.svg)](https://modrinth.com/plugins/cadmium-code)
+[![modrinth](https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/cozy/available/modrinth_vector.svg)](https://modrinth.com/plugin/cadmium-code)
 
 # Features
 Cadmium uses **Python 3.12** as its scripting layer, which allows for almost full (read Technicals) **suppport for PyPI packages**. On top, Paper/Bukkit API abstractions are provided, allowing for **Pythonic syntax to define Commands, hook into Events and more**.
