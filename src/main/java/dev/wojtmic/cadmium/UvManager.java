@@ -37,9 +37,17 @@ public class UvManager {
         switch (uvOverride) {
             case "auto" -> {
                 if (isWindows()) {
-                    uvBinary = Path.of(runProcess("where", "uv"));
+                    try {
+                        uvBinary = Path.of(runProcess("where", "uv"));
+                    } catch (IOException | InterruptedException e) {
+                        uvBinary = Path.of("uv-not-found");
+                    }
                 } else {
-                    uvBinary = Path.of(runProcess("which", "uv"));
+                    try {
+                        uvBinary = Path.of(runProcess("which", "uv"));
+                    } catch (IOException | InterruptedException e) {
+                        uvBinary = Path.of("uv-not-found");
+                    }
                 }
                 if (!Files.exists(uvBinary)) {
                     uvBinary = Cadmium.dataFolder.toPath().resolve(isWindows() ? "uv.exe" : "uv").toAbsolutePath();
@@ -63,10 +71,19 @@ public class UvManager {
                 logger.info("[Cadmium] Using self-installed uv.");
             }
             case "system" -> {
+                Path uvBinary;
                 if (isWindows()) {
-                    uvBinary = Path.of(runProcess("where", "uv"));
+                    try {
+                        uvBinary = Path.of(runProcess("where", "uv"));
+                    } catch (IOException | InterruptedException e) {
+                        uvBinary = Path.of("uv-not-found");
+                    }
                 } else {
-                    uvBinary = Path.of(runProcess("which", "uv"));
+                    try {
+                        uvBinary = Path.of(runProcess("which", "uv"));
+                    } catch (IOException | InterruptedException e) {
+                        uvBinary = Path.of("uv-not-found");
+                    }
                 }
                 if (!Files.exists(uvBinary)) {
                     logger.severe("[Cadmium] uv isn't installed! Change uv-path or install uv system-wide.");

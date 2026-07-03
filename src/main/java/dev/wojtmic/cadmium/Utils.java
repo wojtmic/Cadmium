@@ -50,12 +50,11 @@ public class Utils {
             output = reader.readLine();
         }
 
-        int exit = process.waitFor();
-        if (exit != 0) {
-            throw new IOException("Command failed (exit " + exit + "): " + String.join(" ", command));
+        int exitCode = process.waitFor();
+        if (exitCode != 0) {
+            throw new IOException("Command failed (exit " + exitCode + "): " + String.join(" ", command));
         }
 
         return output == null ? "" : output.trim();
     }
-
 }
