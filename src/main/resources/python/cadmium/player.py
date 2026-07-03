@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from cadmium.utils import mm, to_java_date
 from cadmium.location import Location, location_from
-from cadmium.inventory import Inventory
+from cadmium.inventory import Inventory, ItemStack
 from datetime import datetime
 import java
 from enum import Enum

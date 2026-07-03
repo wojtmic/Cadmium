@@ -18,3 +18,7 @@ def mm(text: str):
     return _MiniMessage.miniMessage().deserialize(text)
 
 def mini_message(text: str): return mm(text)
+
+def serialize_mini_message(text: str):
+    return _MiniMessage.miniMessage().serialize(text)
+
