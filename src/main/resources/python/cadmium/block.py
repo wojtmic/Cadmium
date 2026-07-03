@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from cadmium.data import PersistentData
+from cadmium.data import BlockCustomData
 import java
 
 Material = java.type("org.bukkit.Material")
@@ -45,8 +45,8 @@ class Block:
         return self.raw.getWorld()
 
     @property
-    def data(self) -> PersistentData:
-        return PersistentData(self.raw)
+    def custom_data(self) -> BlockCustomData:
+        return BlockCustomData(self.raw)
 
     def break_naturally(self) -> bool:
         return self.raw.breakNaturally()
