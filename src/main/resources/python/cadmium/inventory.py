@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 import java
 from cadmium.utils import mm, serialize_mini_message
 from cadmium.data import ItemCustomData
+from cadmium.attributes import ItemAttributeModifiers
 
 Material = java.type("org.bukkit.Material")
 _ItemStack = java.type("org.bukkit.inventory.ItemStack")
@@ -12,6 +13,7 @@ _DataComponentType = java.type("io.papermc.paper.datacomponent.DataComponentType
 _DataComponentTypes = java.type("io.papermc.paper.datacomponent.DataComponentTypes")
 
 ItemComponent = _DataComponentTypes
+
 
 class ComponentMap:
     def __init__(self, item_stack):
@@ -38,6 +40,7 @@ class ComponentMap:
 
     def __repr__(self):
         return f"ComponentMap({self._item})"
+
 
 def _resolve_enchantment(key):
     if isinstance(key, str):
@@ -133,7 +136,7 @@ class ItemStack:
     @property
     def max_durability(self) -> int:
         if self.raw.hasData(_DataComponentTypes.MAX_DAMAGE):
-            return self.raw.getData(_DataComponentTypes.MAX_DAMAGE).maxDamage()
+            return self.raw.getData(_DataComponentTypes.MAX_DAMAGE)
         return self.raw.getType().getMaxDurability()
 
     @max_durability.setter
@@ -147,6 +150,10 @@ class ItemStack:
     @property
     def components(self) -> ComponentMap:
         return ComponentMap(self)
+
+    @property
+    def attribute_modifiers(self) -> ItemAttributeModifiers:
+        return ItemAttributeModifiers(self)
 
     def __repr__(self):
         return f"ItemStack({self.material}, x{self.amount})"
