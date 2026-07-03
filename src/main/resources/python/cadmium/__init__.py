@@ -5,6 +5,8 @@ from cadmium.command import *
 from cadmium.location import *
 from cadmium.block import *
 from cadmium.data import *
+from cadmium.utils import *
+from cadmium.inventory import *
 
 class EVENTS(Enum):
     player_join = "player_join"

@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from cadmium.utils import mm, to_java_date
 from cadmium.location import Location, location_from
+from cadmium.inventory import Inventory
 from datetime import datetime
 import java
 from enum import Enum
@@ -123,3 +124,11 @@ class Player:
     @property
     def world(self):
         return self.location.world
+
+    @property
+    def inventory(self) -> Inventory:
+        return Inventory(raw=self.raw.getInventory())
+
+    @property
+    def give(self, item: ItemStack):
+        self.inventory.add_item(item)
