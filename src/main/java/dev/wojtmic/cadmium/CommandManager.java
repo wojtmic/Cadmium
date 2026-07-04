@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 
-import static dev.wojtmic.cadmium.Cadmium.commandPrefix;
+import static dev.wojtmic.cadmium.Cadmium.namespacePrefix;
 
 public class CommandManager {
 
@@ -69,7 +69,7 @@ public class CommandManager {
         }
 
         CadmiumCommand cmd = new CadmiumCommand(name, executor, completer);
-        commandMap.register(commandPrefix, cmd);
+        commandMap.register(namespacePrefix, cmd);
         registered.put(key, cmd);
     }
 

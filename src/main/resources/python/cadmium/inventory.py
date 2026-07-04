@@ -11,7 +11,9 @@ _Enchantment = java.type("org.bukkit.enchantments.Enchantment")
 _NamespacedKey = java.type("org.bukkit.NamespacedKey")
 _DataComponentType = java.type("io.papermc.paper.datacomponent.DataComponentType")
 _DataComponentTypes = java.type("io.papermc.paper.datacomponent.DataComponentTypes")
+_ItemFlag = java.type("org.bukkit.inventory.ItemFlag")
 
+ItemFlags = _ItemFlag
 ItemComponent = _DataComponentTypes
 
 
@@ -55,26 +57,55 @@ def _resolve_enchantment(key):
 class ItemStack:
     material: object
     amount: int = 1
-    display_name: str = None
-    lore: list = field(default_factory=list)
     _raw: object = field(default=None, repr=False, compare=False)
 
-    def __post_init__(self):
-        if self._raw is not None:
+    def __init__(self, material=None, amount: int = 1, display_name: str = None,
+                 lore: list = None, _raw: object = None):
+        if _raw is not None:
+            self._raw = _raw
+            self.amount = amount
             return
-        item = _ItemStack(self.material, self.amount)
-        if self.display_name is not None or self.lore:
+
+        item = _ItemStack(material, amount)
+        if display_name is not None or lore:
             meta = item.getItemMeta()
-            if self.display_name is not None:
-                meta.displayName(mm(self.display_name))
-            if self.lore:
-                meta.lore([mm(line) for line in self.lore])
+            if display_name is not None:
+                meta.displayName(mm(display_name))
+            if lore:
+                meta.lore([mm(line) for line in lore])
             item.setItemMeta(meta)
         self._raw = item
+        self.amount = amount
 
     @property
     def raw(self):
         return self._raw
+
+    @property
+    def display_name(self) -> str:
+        meta = self.raw.getItemMeta()
+        if meta is not None and meta.hasDisplayName():
+            return serialize_mini_message(meta.displayName())
+        return None
+
+    @display_name.setter
+    def display_name(self, value: str):
+        meta = self.raw.getItemMeta()
+        meta.displayName(mm(value) if value is not None else None)
+        self.raw.setItemMeta(meta)
+
+    @property
+    def lore(self) -> list:
+        meta = self.raw.getItemMeta()
+        if meta is not None and meta.hasLore():
+            return [serialize_mini_message(line) for line in meta.lore()]
+        return []
+
+    @lore.setter
+    def lore(self, value: list):
+        meta = self.raw.getItemMeta()
+        meta.lore([mm(line) for line in value] if value else None)
+        self.raw.setItemMeta(meta)
 
     @property
     def enchantments(self) -> dict:
@@ -147,6 +178,12 @@ class ItemStack:
     def custom_data(self) -> ItemCustomData:
         return ItemCustomData(self)
 
+    @custom_data.setter
+    def custom_data(self, value: dict):
+        data = self.custom_data
+        for k, v in value.items():
+            data[k] = v
+
     @property
     def components(self) -> ComponentMap:
         return ComponentMap(self)
@@ -155,6 +192,28 @@ class ItemStack:
     def attribute_modifiers(self) -> ItemAttributeModifiers:
         return ItemAttributeModifiers(self)
 
+    def add_item_flag(self, flag):
+        meta = self.raw.getItemMeta()
+        meta.addItemFlags(flag)
+        self.raw.setItemMeta(meta)
+
+    def remove_item_flag(self, flag):
+        meta = self.raw.getItemMeta()
+        meta.removeItemFlags(flag)
+        self.raw.setItemMeta(meta)
+
+    def has_item_flag(self, flag) -> bool:
+        meta = self.raw.getItemMeta()
+        return meta.hasItemFlag(flag) if meta is not None else False
+
+    @property
+    def material(self) -> object:
+        return self.raw.getType()
+
+    @material.setter
+    def material(self, value):
+        self.raw.setType(value)
+
     def __repr__(self):
         return f"ItemStack({self.material}, x{self.amount})"
 
@@ -162,19 +221,9 @@ class ItemStack:
 def itemstack_from(raw) -> ItemStack:
     if raw is None:
         return None
-    meta = raw.getItemMeta() if raw.hasItemMeta() else None
-    display_name = None
-    lore = []
-    if meta is not None:
-        if meta.hasDisplayName():
-            display_name = serialize_mini_message(meta.displayName())
-        if meta.hasLore():
-            lore = [serialize_mini_message(line) for line in meta.lore()]
     return ItemStack(
         material=raw.getType(),
         amount=raw.getAmount(),
-        display_name=display_name,
-        lore=lore,
         _raw=raw,
     )
 

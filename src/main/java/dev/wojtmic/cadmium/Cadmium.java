@@ -24,7 +24,7 @@ public final class Cadmium extends JavaPlugin {
 
     public static File dataFolder;
     public static File pluginFile;
-    public static String commandPrefix = "cadmium";
+    public static String namespacePrefix = "cadmium";
     public static String uvOverride = "auto";
     public static boolean autoSync = true;
 
@@ -73,7 +73,8 @@ public final class Cadmium extends JavaPlugin {
 
             context.getBindings("python").putMember("_command_manager", commandManager);
             context.getBindings("python").putMember("_plugin", this);
-            context.eval("python", "import builtins; builtins._command_manager = _command_manager; builtins._plugin = _plugin");
+            context.getBindings("python").putMember("_cadmium_namespace", namespacePrefix);
+            context.eval("python", "import builtins; builtins._command_manager = _command_manager; builtins._plugin = _plugin; builtins._cadmium_namespace = _cadmium_namespace");
 
             Path script = getDataFolder().toPath().resolve(entrypoint);
             context.eval(Source.newBuilder("python", script.toFile()).build());
@@ -152,10 +153,10 @@ public final class Cadmium extends JavaPlugin {
                         # set to an explicit path to force that binary (Cadmium will not load if it's not found)
                         # default: auto
                         uv-path = "auto"
-                        # primary fallback prefix used for script-registered commands
+                        # namespace used for script-registered commands, attributes, etc.
                         # (e.g. /<prefix>:<command>)
                         # default: cadmium
-                        command-prefix = "cadmium"
+                        namespace-prefix = "cadmium"
                         """;
 
                 try {
@@ -180,9 +181,9 @@ public final class Cadmium extends JavaPlugin {
         boolean autoSync = toml.getBoolean("tool.cadmium.auto-sync", true);
         String entrypoint = toml.getString("tool.cadmium.main-code", "main.py");
         String uvOverride = toml.getString("tool.cadmium.uv-path", "auto");
-        String commandPrefix = toml.getString("tool.cadmium.command-prefix", "cadmium");
+        String namespacePrefix = toml.getString("tool.cadmium.namespace-prefix", "cadmium");
 
-        Cadmium.commandPrefix = commandPrefix;
+        Cadmium.namespacePrefix = namespacePrefix;
         Cadmium.autoSync = autoSync;
         Cadmium.uvOverride = uvOverride;
 

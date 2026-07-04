@@ -31,7 +31,7 @@ def _infer_type(value):
 
 
 def _key(name: str):
-    return _NamespacedKey("cadmium", name)
+    return _NamespacedKey(_cadmium_namespace, name)
 
 
 class BlockCustomData:
