@@ -11,6 +11,7 @@ from cadmium.schedule import *
 from cadmium.event import *
 from cadmium.entity import *
 from cadmium.living_entity import *
+from cadmium.virtual_inventory import *
 
 class EVENTS(Enum):
     player_join = "player_join"
