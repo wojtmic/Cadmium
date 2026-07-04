@@ -1,5 +1,6 @@
 import java
 from datetime import datetime
+from cadmium.player import Player
 
 Date = java.type("java.util.Date")
 
@@ -22,3 +23,8 @@ def mini_message(text: str): return mm(text)
 def serialize_mini_message(text: str):
     return _MiniMessage.miniMessage().serialize(text)
 
+def find_player(name: str):
+    raw = _Bukkit.getPlayerExact(name)
+    if raw is None:
+        return None
+    return Player(raw=raw)
