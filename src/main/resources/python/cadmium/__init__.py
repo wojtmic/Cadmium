@@ -7,6 +7,7 @@ from cadmium.block import *
 from cadmium.data import *
 from cadmium.utils import *
 from cadmium.inventory import *
+from cadmium.schedule import *
 
 class EVENTS(Enum):
     player_join = "player_join"

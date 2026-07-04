@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from cadmium.utils import mm, to_java_date
 from cadmium.location import Location, location_from
-from cadmium.inventory import Inventory, ItemStack
+from cadmium.inventory import Inventory, ItemStack, itemstack_from
 from datetime import datetime
 import java
 from enum import Enum
@@ -129,6 +129,53 @@ class Player:
     def inventory(self) -> Inventory:
         return Inventory(raw=self.raw.getInventory())
 
-    @property
     def give(self, item: ItemStack):
         self.inventory.add_item(item)
+
+    @property
+    def tool(self) -> ItemStack:
+        return itemstack_from(self.raw.getInventory().getItemInMainHand())
+
+    @tool.setter
+    def tool(self, item: ItemStack):
+        self.raw.getInventory().setItemInMainHand(item.raw)
+
+    @property
+    def off_hand(self) -> ItemStack:
+        return itemstack_from(self.raw.getInventory().getItemInOffHand())
+
+    @off_hand.setter
+    def off_hand(self, item: ItemStack):
+        self.raw.getInventory().setItemInOffHand(item.raw)
+
+    @property
+    def helmet(self) -> ItemStack:
+        return itemstack_from(self.raw.getInventory().getHelmet())
+
+    @helmet.setter
+    def helmet(self, item: ItemStack):
+        self.raw.getInventory().setHelmet(item.raw)
+
+    @property
+    def chestplate(self) -> ItemStack:
+        return itemstack_from(self.raw.getInventory().getChestplate())
+
+    @chestplate.setter
+    def chestplate(self, item: ItemStack):
+        self.raw.getInventory().setChestplate(item.raw)
+
+    @property
+    def leggings(self) -> ItemStack:
+        return itemstack_from(self.raw.getInventory().getLeggings())
+
+    @leggings.setter
+    def leggings(self, item: ItemStack):
+        self.raw.getInventory().setLeggings(item.raw)
+
+    @property
+    def boots(self) -> ItemStack:
+        return itemstack_from(self.raw.getInventory().getBoots())
+
+    @boots.setter
+    def boots(self, item: ItemStack):
+        self.raw.getInventory().setBoots(item.raw)

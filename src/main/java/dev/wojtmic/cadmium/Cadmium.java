@@ -39,6 +39,11 @@ public final class Cadmium extends JavaPlugin {
             commandManager.startReload();
         }
         if (context != null) {
+            try {
+                context.eval("python", "import cadmium.schedule as _every_mod; print('cancelling', len(_every_mod._scheduled_tasks)); _every_mod.cancel_all_tasks()");
+            } catch (Exception e) {
+                getLogger().warning("Failed to cancel scheduled tasks: " + e);
+            }
             context.close();
             context = null;
         }
@@ -67,7 +72,8 @@ public final class Cadmium extends JavaPlugin {
             context.eval("python", "import sys; sys.path.insert(0, '" + uv.getBundledPython() + "')");
 
             context.getBindings("python").putMember("_command_manager", commandManager);
-            context.eval("python", "import builtins; builtins._command_manager = _command_manager");
+            context.getBindings("python").putMember("_plugin", this);
+            context.eval("python", "import builtins; builtins._command_manager = _command_manager; builtins._plugin = _plugin");
 
             Path script = getDataFolder().toPath().resolve(entrypoint);
             context.eval(Source.newBuilder("python", script.toFile()).build());
