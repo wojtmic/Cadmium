@@ -8,6 +8,9 @@ from cadmium.data import *
 from cadmium.utils import *
 from cadmium.inventory import *
 from cadmium.schedule import *
+from cadmium.event import *
+from cadmium.entity import *
+from cadmium.living_entity import *
 
 class EVENTS(Enum):
     player_join = "player_join"
@@ -16,6 +19,9 @@ class EVENTS(Enum):
     block_break = "block_break"
     block_place = "block_place"
     chat = "chat"
+    entity_death = "entity_death"
+    entity_damage = "entity_damage"
+    player_interact_entity = "player_interact_entity"
 
 
 _registry: dict[EVENTS, list] = {}
@@ -28,7 +34,11 @@ def on(*events: EVENTS):
         return func
     return decorator
 
-_event_classes = {}
+_event_classes = {
+    EVENTS.entity_death: EntityDeathEvent,
+    EVENTS.entity_damage: EntityDamageEvent,
+    EVENTS.player_interact_entity: PlayerInteractEntityEvent,
+}
 
 def _dispatch(event: EVENTS, raw):
     cls = _event_classes.get(event)

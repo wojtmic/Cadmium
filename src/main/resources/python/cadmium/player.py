@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from cadmium.utils import mm, to_java_date
 from cadmium.location import Location, location_from
 from cadmium.inventory import Inventory, ItemStack, itemstack_from
+from cadmium.living_entity import LivingEntity
 from datetime import datetime
 import java
 from enum import Enum
@@ -9,7 +10,7 @@ from enum import Enum
 GameMode = java.type("org.bukkit.GameMode")
 
 @dataclass
-class Player:
+class Player(LivingEntity):
     raw: object
 
     @property

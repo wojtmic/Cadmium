@@ -5,7 +5,10 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import io.papermc.paper.event.player.AsyncChatEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.graalvm.polyglot.Context;
@@ -55,5 +58,20 @@ public class Bridge implements Listener {
     @EventHandler
     public void onChat(AsyncChatEvent event) {
         dispatch("chat", event);
+    }
+
+    @EventHandler
+    public void onEntityDeath(EntityDeathEvent event) {
+        dispatch("entity_death", event);
+    }
+
+    @EventHandler
+    public void onEntityDamage(EntityDamageEvent event) {
+        dispatch("entity_damage", event);
+    }
+
+    @EventHandler
+    public void onPlayerInteractEntity(PlayerInteractEntityEvent event) {
+        dispatch("player_interact_entity", event);
     }
 }
