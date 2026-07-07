@@ -7,6 +7,8 @@ from datetime import datetime
 import java
 from enum import Enum
 
+_Bukkit = java.type("org.bukkit.Bukkit")
+
 GameMode = java.type("org.bukkit.GameMode")
 
 @dataclass
@@ -76,7 +78,7 @@ class Player(LivingEntity):
         self.raw.setHealth(val)
 
     def kill(self):
-        ctx.sender.raw.kill()
+        self.raw.kill()
 
     @property
     def food_level(self) -> int:
@@ -180,3 +182,13 @@ class Player(LivingEntity):
     @boots.setter
     def boots(self, item: ItemStack):
         self.raw.getInventory().setBoots(item.raw)
+
+def find_player(name: str):
+    raw = _Bukkit.getPlayerExact(name)
+    if raw is None:
+        return None
+
+    return Player(raw=raw)
+
+def get_all_players() -> list:
+    return [Player(raw=p) for p in _Bukkit.getOnlinePlayers()]
