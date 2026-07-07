@@ -12,6 +12,8 @@ from cadmium.event import *
 from cadmium.entity import *
 from cadmium.living_entity import *
 from cadmium.virtual_inventory import *
+from cadmium._async import is_async_callable
+import builtins
 
 class EVENTS(Enum):
     player_join = "player_join"
@@ -41,8 +43,24 @@ _event_classes = {
     EVENTS.player_interact_entity: PlayerInteractEntityEvent,
 }
 
+def _has_coroutine_manager():
+    return hasattr(builtins, "_coroutine_manager")
+
 def _dispatch(event: EVENTS, raw):
     cls = _event_classes.get(event)
     obj = cls(raw) if cls else Event(raw=raw)
+
+    if _has_coroutine_manager():
+        _coroutine_manager.notify_event(event.value, obj)
+
     for handler in _registry.get(event, []):
-        handler(obj)
+        if is_async_callable(handler):
+            if not _has_coroutine_manager():
+                raise RuntimeError(
+                    f"async handler {handler!r} registered but no coroutine "
+                    "manager is available - this is a Cadmium internal error"
+                )
+            near = getattr(obj.player, "raw", None) if getattr(obj, "player", None) else None
+            _coroutine_manager.start(handler, obj, near)
+        else:
+            handler(obj)

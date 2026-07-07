@@ -27,6 +27,12 @@ public class Bridge implements Listener {
 
     private void dispatch(String eventName, Object event) {
         Value enumValue = eventsEnum.getMember(eventName);
+        if (enumValue == null) {
+            throw new IllegalStateException(
+                    "Cadmium internal error: Bridge dispatched event name '" + eventName
+                            + "' but cadmium.EVENTS has no matching member. Add it to the EVENTS "
+                            + "enum in cadmium/__init__.py.");
+        }
         dispatch.execute(enumValue, event);
     }
 

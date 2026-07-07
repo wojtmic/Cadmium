@@ -21,6 +21,7 @@ public final class Cadmium extends JavaPlugin {
     private Context context;
     private Bridge bridge;
     private CommandManager commandManager;
+    private CoroutineScheduler coroutineScheduler;
 
     public static File dataFolder;
     public static File pluginFile;
@@ -43,6 +44,10 @@ public final class Cadmium extends JavaPlugin {
                 context.eval("python", "import cadmium.schedule as _every_mod; print('cancelling', len(_every_mod._scheduled_tasks)); _every_mod.cancel_all_tasks()");
             } catch (Exception e) {
                 getLogger().warning("Failed to cancel scheduled tasks: " + e);
+            }
+            if (coroutineScheduler != null) {
+                coroutineScheduler.shutdown();
+                coroutineScheduler = null;
             }
             context.close();
             context = null;
@@ -75,6 +80,10 @@ public final class Cadmium extends JavaPlugin {
             context.getBindings("python").putMember("_plugin", this);
             context.getBindings("python").putMember("_cadmium_namespace", namespacePrefix);
             context.eval("python", "import builtins; builtins._command_manager = _command_manager; builtins._plugin = _plugin; builtins._cadmium_namespace = _cadmium_namespace");
+
+            coroutineScheduler = new CoroutineScheduler(this, context, getLogger());
+            context.getBindings("python").putMember("_coroutine_manager", coroutineScheduler);
+            context.eval("python", "import builtins; builtins._coroutine_manager = _coroutine_manager");
 
             Path script = getDataFolder().toPath().resolve(entrypoint);
             context.eval(Source.newBuilder("python", script.toFile()).build());
@@ -223,6 +232,7 @@ public final class Cadmium extends JavaPlugin {
     @Override
     public void onDisable() {
         if (bridge != null) HandlerList.unregisterAll(bridge);
+        if (coroutineScheduler != null) coroutineScheduler.shutdown();
         if (context != null) context.close();
     }
 }

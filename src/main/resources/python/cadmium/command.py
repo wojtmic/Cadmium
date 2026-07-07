@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 from cadmium.player import Player
+from cadmium._async import is_async_callable
 
 @dataclass
 class CommandContext:
@@ -18,13 +19,19 @@ def _wrap_sender(raw_sender):
 
 def command(name: str, permission: str = None, completer=None):
     def decorator(func):
+        func_is_async = is_async_callable(func)
+
         def executor(sender, label, args):
             py_sender = _wrap_sender(sender)
             if permission and not sender.hasPermission(permission):
                 py_sender.send("<red>You don't have permission.")
                 return
             ctx = CommandContext(sender=py_sender, label=label, argv=list(args))
-            func(ctx)
+            if func_is_async:
+                near = py_sender.raw if hasattr(py_sender, "raw") else None
+                _coroutine_manager.start(func, ctx, near)
+            else:
+                func(ctx)
 
         def java_completer(sender, label, args):
             if completer is None:

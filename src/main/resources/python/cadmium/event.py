@@ -9,16 +9,35 @@ def _wrap_player(raw):
     return Player(raw=p) if p is not None else None
 
 
+class _CancellableMixin:
+    _cancel_window_closed: bool = False
+
+    def _close_cancel_window(self):
+        self._cancel_window_closed = True
+
+    def _guarded_cancel(self):
+        if self._cancel_window_closed:
+            raise RuntimeError(
+                "event.cancel() called after the handler's first await - "
+                "this is too late, the underlying event has already been "
+                "processed by the server. Call event.cancel() before your "
+                "first await, or restructure the handler so the decision "
+                "to cancel happens synchronously."
+            )
+        self.raw.setCancelled(True)
+
+
 @dataclass
-class Event:
+class Event(_CancellableMixin):
     raw: object
     player: Player = field(default=None, init=False)
 
     def __post_init__(self):
         self.player = _wrap_player(self.raw)
+        self._cancel_window_closed = False
 
     def cancel(self):
-        self.raw.setCancelled(True)
+        self._guarded_cancel()
 
 
 @dataclass
@@ -57,8 +76,9 @@ class EntityDeathEvent:
 
 
 @dataclass
-class EntityDamageEvent:
+class EntityDamageEvent(_CancellableMixin):
     raw: object
+    _cancel_window_closed: bool = field(default=False, init=False, repr=False)
 
     @property
     def entity(self):
@@ -87,15 +107,16 @@ class EntityDamageEvent:
         return None
 
     def cancel(self):
-        self.raw.setCancelled(True)
+        self._guarded_cancel()
 
     def __repr__(self):
         return f"EntityDamageEvent({self.entity}, {self.damage})"
 
 
 @dataclass
-class PlayerInteractEntityEvent:
+class PlayerInteractEntityEvent(_CancellableMixin):
     raw: object
+    _cancel_window_closed: bool = field(default=False, init=False, repr=False)
 
     @property
     def player(self):
@@ -106,7 +127,7 @@ class PlayerInteractEntityEvent:
         return entity_from_raw(self.raw.getRightClicked())
 
     def cancel(self):
-        self.raw.setCancelled(True)
+        self._guarded_cancel()
 
     def __repr__(self):
         return f"PlayerInteractEntityEvent({self.player}, {self.entity})"
