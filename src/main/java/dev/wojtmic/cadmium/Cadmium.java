@@ -9,6 +9,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Source;
+import org.graalvm.python.embedding.GraalPyResources;
 
 import java.io.File;
 import java.io.IOException;
@@ -62,7 +63,7 @@ public final class Cadmium extends JavaPlugin {
             return;
         }
 
-        context = Context.newBuilder("python")
+        context = GraalPyResources.contextBuilder(getDataFolder().toPath().toAbsolutePath())
                 .allowAllAccess(true)
                 .option("python.PosixModuleBackend", "native")
                 .hostClassLoader(getClassLoader())
@@ -70,10 +71,8 @@ public final class Cadmium extends JavaPlugin {
                 .build();
 
         try {
-            Path sitePackages = uv.getSitePackages();
             Path dataFolder = getDataFolder().toPath().toAbsolutePath();
             context.eval("python", "import sys; sys.path.insert(0, '" + dataFolder + "')");
-            context.eval("python", "import sys; sys.path.insert(0, '" + sitePackages + "')");
             context.eval("python", "import sys; sys.path.insert(0, '" + uv.getBundledPython() + "')");
 
             context.getBindings("python").putMember("_command_manager", commandManager);

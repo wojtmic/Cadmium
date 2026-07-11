@@ -71,7 +71,6 @@ public class UvManager {
                 logger.info("[Cadmium] Using self-installed uv.");
             }
             case "system" -> {
-                Path uvBinary;
                 if (isWindows()) {
                     try {
                         uvBinary = Path.of(runProcess("where", "uv"));
@@ -93,17 +92,32 @@ public class UvManager {
             default -> uvBinary = Path.of(uvOverride);
         }
 
+        Path pythonVersion = Cadmium.dataFolder.toPath().resolve(".python-version");
+        if (!Files.exists(pythonVersion)) {
+            Files.writeString(pythonVersion, "graalpy-3.12\n");
+        }
+
         if (autoSync) {
             logger.info("[Cadmium] Syncing Python Project...");
             runProcess(uvBinary.toString(), "sync");
             logger.info("[Cadmium] Sync complete.");
         }
 
+        Path dotVenv = Cadmium.dataFolder.toPath().resolve(".venv").toAbsolutePath();
+        Path venvLink = getVenvPath();
+        if (!Files.exists(venvLink, java.nio.file.LinkOption.NOFOLLOW_LINKS) && Files.exists(dotVenv)) {
+            Files.createSymbolicLink(venvLink, dotVenv);
+        }
+
         bundledPython = extractBundledPython();
     }
 
+    public Path getVenvPath() {
+        return Cadmium.dataFolder.toPath().resolve("venv").toAbsolutePath();
+    }
+
     public Path getSitePackages() {
-        Path venv = Cadmium.dataFolder.toPath().resolve(".venv").toAbsolutePath();
+        Path venv = getVenvPath();
 
         Path lib = venv.resolve("lib").resolve("python3.12").resolve("site-packages");
         if (Files.exists(lib)) return lib;
@@ -120,19 +134,19 @@ public class UvManager {
         Files.createDirectories(dest);
         try (JarFile jar = new JarFile(Cadmium.pluginFile)) {
             jar.stream()
-                .filter(e -> e.getName().startsWith("python/") && !e.isDirectory())
-                .forEach(e -> {
-                    try {
-                        String relative = e.getName().substring("python/".length());
-                        Path target = dest.resolve(relative);
-                        Files.createDirectories(target.getParent());
-                        try (InputStream is = jar.getInputStream(e)) {
-                            Files.copy(is, target, StandardCopyOption.REPLACE_EXISTING);
+                    .filter(e -> e.getName().startsWith("python/") && !e.isDirectory())
+                    .forEach(e -> {
+                        try {
+                            String relative = e.getName().substring("python/".length());
+                            Path target = dest.resolve(relative);
+                            Files.createDirectories(target.getParent());
+                            try (InputStream is = jar.getInputStream(e)) {
+                                Files.copy(is, target, StandardCopyOption.REPLACE_EXISTING);
+                            }
+                        } catch (IOException ex) {
+                            throw new UncheckedIOException(ex);
                         }
-                    } catch (IOException ex) {
-                        throw new UncheckedIOException(ex);
-                    }
-                });
+                    });
         } catch (UncheckedIOException e) {
             throw e.getCause();
         }
