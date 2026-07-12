@@ -1,12 +1,24 @@
 import asyncio
+import asyncio.selector_events
 import inspect
+import selectors
 
 _coroutines: dict[int, object] = {}
 _not_yet_started: set[int] = set()
 _first_step_args: dict[int, tuple] = {}
 _next_token = 0
 
-_loop = asyncio.new_event_loop()
+_loop = None
+
+
+def _get_loop():
+    global _loop
+    if _loop is None:
+        try:
+            _loop = asyncio.new_event_loop()
+        except Exception:
+            _loop = asyncio.selector_events.BaseSelectorEventLoop(selectors.SelectSelector())
+    return _loop
 
 
 class _Resume:
@@ -51,11 +63,11 @@ def _close_cancel_windows(args):
 
 
 def _start_async_task(coro) -> "asyncio.Task":
-    return _loop.create_task(coro)
+    return _get_loop().create_task(coro)
 
 
 def _poll_async_task(task) -> tuple[bool, object]:
-    _loop.run_until_complete(asyncio.sleep(0))
+    _get_loop().run_until_complete(asyncio.sleep(0))
 
     if not task.done():
         return (False, None)
