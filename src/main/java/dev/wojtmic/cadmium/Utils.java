@@ -40,10 +40,15 @@ public class Utils {
     }
 
     public static String runProcess(String... command) throws IOException, InterruptedException {
-        Process process = new ProcessBuilder(command)
+        return runProcess(java.util.Map.of(), command);
+    }
+
+    public static String runProcess(java.util.Map<String, String> env, String... command) throws IOException, InterruptedException {
+        ProcessBuilder builder = new ProcessBuilder(command)
                 .directory(Cadmium.dataFolder)
-                .redirectErrorStream(false)
-                .start();
+                .redirectErrorStream(false);
+        builder.environment().putAll(env);
+        Process process = builder.start();
 
         String output;
         try (var reader = process.inputReader()) {

@@ -65,7 +65,7 @@ public final class Cadmium extends JavaPlugin {
 
         context = GraalPyResources.contextBuilder(getDataFolder().toPath().toAbsolutePath())
                 .allowAllAccess(true)
-                .option("python.PosixModuleBackend", "native")
+//                .option("python.PosixModuleBackend", "native")
                 .hostClassLoader(getClassLoader())
                 .allowHostClassLookup(className -> true)
                 .build();

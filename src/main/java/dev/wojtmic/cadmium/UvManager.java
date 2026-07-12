@@ -99,14 +99,11 @@ public class UvManager {
 
         if (autoSync) {
             logger.info("[Cadmium] Syncing Python Project...");
-            runProcess(uvBinary.toString(), "sync");
+            runProcess(
+                    java.util.Map.of("UV_PROJECT_ENVIRONMENT", getVenvPath().toString()),
+                    uvBinary.toString(), "sync"
+            );
             logger.info("[Cadmium] Sync complete.");
-        }
-
-        Path dotVenv = Cadmium.dataFolder.toPath().resolve(".venv").toAbsolutePath();
-        Path venvLink = getVenvPath();
-        if (!Files.exists(venvLink, java.nio.file.LinkOption.NOFOLLOW_LINKS) && Files.exists(dotVenv)) {
-            Files.createSymbolicLink(venvLink, dotVenv);
         }
 
         bundledPython = extractBundledPython();
