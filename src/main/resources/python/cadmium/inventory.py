@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 import java
+from collections.abc import MutableSequence
 from cadmium.utils import mm, serialize_mini_message
 from cadmium.data import ItemCustomData
 from cadmium.attributes import ItemAttributeModifiers
@@ -15,6 +16,46 @@ _ItemFlag = java.type("org.bukkit.inventory.ItemFlag")
 
 ItemFlags = _ItemFlag
 ItemComponent = _DataComponentTypes
+
+
+class LoreList(MutableSequence):
+    def __init__(self, item):
+        self._item = item
+
+    def _get_lines(self) -> list[str]:
+        meta = self._item.raw.getItemMeta()
+        if meta is not None and meta.hasLore():
+            return [serialize_mini_message(line) for line in meta.lore()]
+        return []
+
+    def _set_lines(self, lines: list[str]):
+        meta = self._item.raw.getItemMeta()
+        meta.lore([mm(line) for line in lines] if lines else None)
+        self._item.raw.setItemMeta(meta)
+
+    def __getitem__(self, index):
+        return self._get_lines()[index]
+
+    def __setitem__(self, index, value):
+        lines = self._get_lines()
+        lines[index] = value
+        self._set_lines(lines)
+
+    def __delitem__(self, index):
+        lines = self._get_lines()
+        del lines[index]
+        self._set_lines(lines)
+
+    def __len__(self):
+        return len(self._get_lines())
+
+    def insert(self, index, value):
+        lines = self._get_lines()
+        lines.insert(index, value)
+        self._set_lines(lines)
+
+    def __repr__(self):
+        return repr(self._get_lines())
 
 
 class ComponentMap:
@@ -95,11 +136,8 @@ class ItemStack:
         self.raw.setItemMeta(meta)
 
     @property
-    def lore(self) -> list:
-        meta = self.raw.getItemMeta()
-        if meta is not None and meta.hasLore():
-            return [serialize_mini_message(line) for line in meta.lore()]
-        return []
+    def lore(self) -> LoreList:
+        return LoreList(self)
 
     @lore.setter
     def lore(self, value: list):
