@@ -2,6 +2,19 @@ from dataclasses import dataclass
 import java
 from cadmium.location import Location, location_from
 from cadmium.data import BlockCustomData
+from cadmium.vector import Vector, vector_from
+
+class _LiveVector(Vector):
+    def __init__(self, entity, raw_vec):
+        object.__setattr__(self, "_entity", entity)
+        object.__setattr__(self, "_ready", False)
+        super().__init__(raw_vec.getX(), raw_vec.getY(), raw_vec.getZ())
+        object.__setattr__(self, "_ready", True)
+
+    def __setattr__(self, name, value):
+        super().__setattr__(name, value)
+        if self._ready and name in ("x", "y", "z"):
+            self._entity.raw.setVelocity(self.raw)
 
 _Bukkit = java.type("org.bukkit.Bukkit")
 _UUID = java.type("java.util.UUID")
@@ -50,12 +63,12 @@ class Entity:
         return self.raw.getWorld()
 
     @property
-    def velocity(self):
-        return self.raw.getVelocity()
+    def velocity(self) -> Vector:
+        return _LiveVector(self, self.raw.getVelocity())
 
     @velocity.setter
-    def velocity(self, vec):
-        self.raw.setVelocity(vec)
+    def velocity(self, vec: Vector):
+        self.raw.setVelocity(vec.raw)
 
     @property
     def is_on_ground(self) -> bool:
