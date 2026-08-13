@@ -4,11 +4,13 @@ import io.papermc.paper.command.brigadier.Commands;
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Source;
+import org.graalvm.polyglot.Value;
 import org.graalvm.python.embedding.GraalPyResources;
 
 import java.io.File;
@@ -98,15 +100,28 @@ public final class Cadmium extends JavaPlugin {
                     getLogger().warning("Could not sync commands: " + ex.getMessage());
                 }
             }
-        } catch (IOException | PolyglotException e) {
-//        } catch (IOException e) { // uncomment this and comment above when testing to see full errors, leave this commented and the thing above uncommented in builds
+
+        } catch (IOException e) {
             commandManager.finishReload();
-            getComponentLogger().error("An exception occurred while loading Python:");
-            getComponentLogger().error(e.getMessage());
-            if (failFast) {
-                getComponentLogger().error("Because of Cadmium config, shutting down server due to script loading failure!");
-                getServer().shutdown();
-            }
+            throw new RuntimeException("Failed to load Python script: " + e.getMessage(), e);
+        } catch (PolyglotException e) {
+            commandManager.finishReload();
+            Path script = getDataFolder().toPath().resolve(entrypoint);
+            context.getBindings("python").putMember("_cadmium_script_path", script.toString());
+
+            Value result = context.eval("python", """
+                import traceback
+                _cadmium_tb = None
+                try:
+                    with open(_cadmium_script_path) as _f:
+                        exec(compile(_f.read(), _cadmium_script_path, 'exec'), {'__name__': '__main__'})
+                except BaseException:
+                    _cadmium_tb = traceback.format_exc()
+                _cadmium_tb
+                """);
+
+            String tb = result.isString() ? result.asString() : null;
+            throw new RuntimeException(tb, e);
         }
     }
 
@@ -195,15 +210,47 @@ public final class Cadmium extends JavaPlugin {
         Cadmium.autoSync = autoSync;
         Cadmium.uvOverride = uvOverride;
 
-        reload(failFast, entrypoint);
+        try {
+            reload(failFast, entrypoint);
+        } catch (RuntimeException e) {
+            getComponentLogger().error(e.getMessage());
+            if (failFast) {
+                getServer().shutdown();
+            }
+        }
+
 
         if (cadCommand) {
             getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS, event -> {
                 var reloadNode = Commands.literal("reload")
                         .executes(ctx -> {
-                            reload(failReload, entrypoint);
-                            Component msg = MiniMessage.miniMessage().deserialize("<green>Reloaded!");
-                            ctx.getSource().getSender().sendMessage(msg);
+                            Component msg1 = MiniMessage.miniMessage().deserialize("[<#FFD93D>Cadmium</#FFD93D>] <gold>Reloading...</gold>");
+                            ctx.getSource().getSender().sendMessage(msg1);
+                            long start = System.nanoTime();
+
+                            try {
+                                reload(failReload, entrypoint);
+                            } catch (RuntimeException e) {
+                                getComponentLogger().error(e.getMessage());
+
+                                Component msg3 = MiniMessage.miniMessage().deserialize(
+                                        "[<#FFD93D>Cadmium</#FFD93D>] <red>Error while reloading!\n<traceback>",
+                                        Placeholder.unparsed("traceback", e.getMessage())
+                                );
+                                ctx.getSource().getSender().sendMessage(msg3);
+
+                                if (failReload) {
+                                    getServer().shutdown();
+                                }
+
+                                return 0;
+                            }
+
+                            long end = System.nanoTime();
+                            long elapsed = (end - start ) / 1_000_000;
+
+                            Component msg2 = MiniMessage.miniMessage().deserialize("[<#FFD93D>Cadmium</#FFD93D>] <green>Reloaded in <gold>" + elapsed + "ms</gold>!");
+                            ctx.getSource().getSender().sendMessage(msg2);
                             return 1;
                         });
 
