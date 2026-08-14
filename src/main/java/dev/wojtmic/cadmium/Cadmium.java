@@ -254,6 +254,21 @@ public final class Cadmium extends JavaPlugin {
                             ctx.getSource().getSender().sendMessage(msg2);
                             return 1;
                         });
+                var dumpstubsNode = Commands.literal("dumpstubs")
+                        .executes(ctx -> {
+                            String outPath = getDataFolder().toPath().resolve("stub-dump.json").toString();
+                            try {
+                                dev.wojtmic.cadmium.tools.StubDumper.dump(outPath);
+                                Component msg = MiniMessage.miniMessage().deserialize(
+                                        "[<#FFD93D>Cadmium</#FFD93D>] <green>Stub dump written to <gold>" + outPath + "</gold>");
+                                ctx.getSource().getSender().sendMessage(msg);
+                            } catch (java.io.IOException e) {
+                                Component msg = MiniMessage.miniMessage().deserialize(
+                                        "[<#FFD93D>Cadmium</#FFD93D>] <red>Stub dump failed: <white>" + e.getMessage());
+                                ctx.getSource().getSender().sendMessage(msg);
+                            }
+                            return 1;
+                        });
 
                 java.util.function.Predicate<io.papermc.paper.command.brigadier.CommandSourceStack> hasPerm =
                         source -> source.getSender().hasPermission("cadmium.admin");
@@ -262,6 +277,7 @@ public final class Cadmium extends JavaPlugin {
                         Commands.literal("cadmium")
                                 .requires(hasPerm)
                                 .then(reloadNode)
+                                .then(dumpstubsNode)
                                 .build()
                 );
 
@@ -269,6 +285,7 @@ public final class Cadmium extends JavaPlugin {
                         Commands.literal("cad")
                                 .requires(hasPerm)
                                 .then(reloadNode)
+                                .then(dumpstubsNode)
                                 .build()
                 );
             });

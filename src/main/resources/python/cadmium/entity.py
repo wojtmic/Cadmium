@@ -1,20 +1,12 @@
 from dataclasses import dataclass
+from typing import TYPE_CHECKING, Union
 import java
 from cadmium.location import Location, location_from
 from cadmium.data import BlockCustomData
-from cadmium.vector import Vector, vector_from
 
-class _LiveVector(Vector):
-    def __init__(self, entity, raw_vec):
-        object.__setattr__(self, "_entity", entity)
-        object.__setattr__(self, "_ready", False)
-        super().__init__(raw_vec.getX(), raw_vec.getY(), raw_vec.getZ())
-        object.__setattr__(self, "_ready", True)
-
-    def __setattr__(self, name, value):
-        super().__setattr__(name, value)
-        if self._ready and name in ("x", "y", "z"):
-            self._entity.raw.setVelocity(self.raw)
+if TYPE_CHECKING:
+    from cadmium.player import Player
+    from cadmium.living_entity import LivingEntity
 
 _Bukkit = java.type("org.bukkit.Bukkit")
 _UUID = java.type("java.util.UUID")
@@ -63,12 +55,12 @@ class Entity:
         return self.raw.getWorld()
 
     @property
-    def velocity(self) -> Vector:
-        return _LiveVector(self, self.raw.getVelocity())
+    def velocity(self):
+        return self.raw.getVelocity()
 
     @velocity.setter
-    def velocity(self, vec: Vector):
-        self.raw.setVelocity(vec.raw)
+    def velocity(self, vec):
+        self.raw.setVelocity(vec)
 
     @property
     def is_on_ground(self) -> bool:
@@ -125,7 +117,7 @@ class Entity:
         return f"Entity({self.raw.getType()}, {self.uuid})"
 
 
-def entity_from_raw(raw):
+def entity_from_raw(raw) -> Union["Player", "LivingEntity", "Entity", None]:
     if raw is None:
         return None
     if isinstance(raw, _Player):

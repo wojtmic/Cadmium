@@ -1,9 +1,13 @@
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Union
 from cadmium.player import Player
-from cadmium.entity import entity_from_raw
+from cadmium.entity import Entity, entity_from_raw
 from cadmium.inventory import itemstack_from
 from cadmium.vector import Vector, vector_from
-from cadmium.location import location_from
+from cadmium.location import Location, location_from
+
+if TYPE_CHECKING:
+    from cadmium.living_entity import LivingEntity
 
 def _wrap_player(raw):
     p = raw.getPlayer() if hasattr(raw, 'getPlayer') else None
@@ -46,7 +50,7 @@ class EntityKnockbackEvent(_CancellableMixin):
     _cancel_window_closed: bool = field(default=False, init=False, repr=False)
 
     @property
-    def entity(self):
+    def entity(self) -> Union[Player, "LivingEntity", Entity, None]:
         return entity_from_raw(self.raw.getEntity())
 
     @property
@@ -73,11 +77,11 @@ class EntityPushedByEntityAttackEvent(_CancellableMixin):
     _cancel_window_closed: bool = field(default=False, init=False, repr=False)
 
     @property
-    def entity(self):
+    def entity(self) -> Union[Player, "LivingEntity", Entity, None]:
         return entity_from_raw(self.raw.getEntity())
 
     @property
-    def attacker(self):
+    def attacker(self) -> Union[Player, "LivingEntity", Entity, None]:
         return entity_from_raw(self.raw.getPushedBy())
 
     @property
@@ -103,11 +107,11 @@ class EntityDeathEvent:
     raw: object
 
     @property
-    def entity(self):
+    def entity(self) -> Union[Player, "LivingEntity", Entity, None]:
         return entity_from_raw(self.raw.getEntity())
 
     @property
-    def killer(self):
+    def killer(self) -> Union[Player, "LivingEntity", Entity, None]:
         killer = self.raw.getEntity().getKiller()
         return entity_from_raw(killer) if killer is not None else None
 
@@ -139,7 +143,7 @@ class EntityDamageEvent(_CancellableMixin):
     _cancel_window_closed: bool = field(default=False, init=False, repr=False)
 
     @property
-    def entity(self):
+    def entity(self) -> Union[Player, "LivingEntity", Entity, None]:
         return entity_from_raw(self.raw.getEntity())
 
     @property
@@ -159,7 +163,7 @@ class EntityDamageEvent(_CancellableMixin):
         return self.raw.getCause()
 
     @property
-    def damager(self):
+    def damager(self) -> Union[Player, "LivingEntity", Entity, None]:
         if hasattr(self.raw, "getDamager"):
             return entity_from_raw(self.raw.getDamager())
         return None
@@ -177,11 +181,11 @@ class PlayerInteractEntityEvent(_CancellableMixin):
     _cancel_window_closed: bool = field(default=False, init=False, repr=False)
 
     @property
-    def player(self):
+    def player(self) -> Player:
         return Player(raw=self.raw.getPlayer())
 
     @property
-    def entity(self):
+    def entity(self) -> Union[Player, "LivingEntity", Entity, None]:
         return entity_from_raw(self.raw.getRightClicked())
 
     def cancel(self):
@@ -226,15 +230,15 @@ class PlayerMoveEvent(_CancellableMixin):
     _cancel_window_closed: bool = field(default=False, init=False, repr=False)
 
     @property
-    def player(self):
+    def player(self) -> Player:
         return Player(raw=self.raw.getPlayer())
 
     @property
-    def from_(self):
+    def from_(self) -> Location:
         return location_from(self.raw.getFrom())
 
     @property
-    def to(self):
+    def to(self) -> Location:
         return location_from(self.raw.getTo())
 
     def cancel(self):
