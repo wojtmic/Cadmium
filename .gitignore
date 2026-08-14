@@ -8,3 +8,5 @@ out/
 .idea_modules/
 hs_err_pid*
 run
+*.vsix
+node_modules/

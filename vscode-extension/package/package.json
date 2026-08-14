@@ -1,0 +1,52 @@
+{
+  "name": "cadmium-types",
+  "displayName": "Cadmium Types",
+  "description": "Makes Pylance resolve the Cadmium Paper plugin API (and its Bukkit/Adventure surface) in any workspace, without installing anything into the project.",
+  "version": "0.1.0",
+  "publisher": "wojtmic",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Other"
+  ],
+  "extensionDependencies": [
+    "ms-python.vscode-pylance"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "cadmiumTypes.reapply",
+        "title": "Cadmium: Reapply Pylance Type Paths"
+      }
+    ]
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "vscode:prepublish": "npm run compile",
+    "package": "npm run compile && vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^20.x",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^3.x",
+    "typescript": "^5.x"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wojtmic/Cadmium.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/wojtmic/Cadmium/issues"
+  },
+  "homepage": "https://github.com/wojtmic/Cadmium#readme"
+}

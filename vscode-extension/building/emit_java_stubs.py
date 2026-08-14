@@ -30,13 +30,28 @@ LANG_MAP = {
 }
 
 CONTAINER_MAP = {
-    "java.util.List": "list",
-    "java.util.Collection": "list",
-    "java.util.Set": "set",
+    "java.util.List": "JList",
+    "java.util.Collection": "JList",
+    "java.util.Set": "JList",
     "java.util.Map": "dict",
     "java.util.Optional": "Any",
     "com.google.common.collect.Multimap": "dict",
 }
+
+# Java collections keep their real Java method names at runtime (GraalPy does
+# not rename them to add()->append() etc.) - map them to a small stub with
+# the actual Java API instead of Python's `list`/`set`, which have different
+# method names and would falsely flag working code like `.getDrops().add(x)`.
+JAVA_COLLECTION_PREAMBLE = '''
+class JList:
+    def add(self, arg0: Any) -> bool: ...
+    def get(self, arg0: int) -> Any: ...
+    def size(self) -> int: ...
+    def clear(self) -> None: ...
+    def remove(self, arg0: Any) -> bool: ...
+    def isEmpty(self) -> bool: ...
+    def __iter__(self) -> Any: ...
+'''
 
 GENERIC_VAR_RE = re.compile(r"^[A-Z][0-9]?$")
 
@@ -118,8 +133,10 @@ def main():
     out_file = out_dir / "java_types.pyi"
 
     header = (
-        '"""AUTO-GENERATED from stub-dump.json - regenerate, don\'t hand-edit."""\n'
-        "from typing import Any\n\n"
+            '"""AUTO-GENERATED from stub-dump.json - regenerate, don\'t hand-edit."""\n'
+            "from typing import Any\n"
+            + JAVA_COLLECTION_PREAMBLE
+            + "\n"
     )
     body = "\n\n".join(emit_class(c, known) for c in classes)
     out_file.write_text(header + body + "\n")

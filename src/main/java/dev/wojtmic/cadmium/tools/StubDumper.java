@@ -35,6 +35,19 @@ public class StubDumper {
             "net.kyori.adventure.text.minimessage.MiniMessage",
             "net.kyori.adventure.title.Title",
             "net.kyori.adventure.title.Title$Times",
+
+            "org.bukkit.event.entity.EntityDeathEvent",
+            "org.bukkit.event.entity.EntityDamageEvent",
+            "org.bukkit.event.player.PlayerInteractEntityEvent",
+            "org.bukkit.event.player.PlayerMoveEvent",
+            "io.papermc.paper.event.entity.EntityKnockbackEvent",
+            "io.papermc.paper.event.entity.EntityPushedByEntityAttackEvent",
+            "io.papermc.paper.event.player.AsyncChatEvent",
+            "org.bukkit.event.player.PlayerJoinEvent",
+            "org.bukkit.event.player.PlayerQuitEvent",
+            "org.bukkit.event.entity.PlayerDeathEvent",
+            "org.bukkit.event.block.BlockBreakEvent",
+            "org.bukkit.event.block.BlockPlaceEvent",
     };
 
     public static void dump(String outputPath) throws IOException {
