@@ -55,7 +55,6 @@ public final class Cadmium extends JavaPlugin {
             context.close();
             context = null;
         }
-
         UvManager uv = new UvManager(getLogger());
         try {
             uv.setup();
@@ -127,6 +126,8 @@ public final class Cadmium extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        long startTime = System.nanoTime();
+
         dataFolder = getDataFolder();
         pluginFile = getFile();
         dataFolder.mkdirs();
@@ -273,6 +274,8 @@ public final class Cadmium extends JavaPlugin {
             });
         }
 
+        long elapsed = (System.nanoTime() - startTime) / 1_000_000;
+        getComponentLogger().info("Cadmium startup complete in " + elapsed + "ms!");
     }
 
     @Override

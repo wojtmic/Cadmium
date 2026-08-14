@@ -26,7 +26,9 @@ class EVENTS(Enum):
     entity_death = "entity_death"
     entity_damage = "entity_damage"
     player_interact_entity = "player_interact_entity"
-
+    entity_knockback = "entity_knockback"
+    entity_pushed_by_entity_attack = "entity_pushed_by_entity_attack"
+    player_move = "player_move"
 
 _registry: dict[EVENTS, list] = {}
 
@@ -42,6 +44,10 @@ _event_classes = {
     EVENTS.entity_death: EntityDeathEvent,
     EVENTS.entity_damage: EntityDamageEvent,
     EVENTS.player_interact_entity: PlayerInteractEntityEvent,
+    EVENTS.entity_knockback: EntityKnockbackEvent,
+    EVENTS.entity_pushed_by_entity_attack: EntityPushedByEntityAttackEvent,
+    EVENTS.chat: ChatEvent,
+    EVENTS.player_move: PlayerMoveEvent,
 }
 
 def _has_coroutine_manager():

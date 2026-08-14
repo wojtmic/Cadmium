@@ -2,7 +2,8 @@ from dataclasses import dataclass, field
 from cadmium.player import Player
 from cadmium.entity import entity_from_raw
 from cadmium.inventory import itemstack_from
-
+from cadmium.vector import Vector, vector_from
+from cadmium.location import location_from
 
 def _wrap_player(raw):
     p = raw.getPlayer() if hasattr(raw, 'getPlayer') else None
@@ -39,6 +40,63 @@ class Event(_CancellableMixin):
     def cancel(self):
         self._guarded_cancel()
 
+@dataclass
+class EntityKnockbackEvent(_CancellableMixin):
+    raw: object
+    _cancel_window_closed: bool = field(default=False, init=False, repr=False)
+
+    @property
+    def entity(self):
+        return entity_from_raw(self.raw.getEntity())
+
+    @property
+    def cause(self):
+        return self.raw.getCause()
+
+    @property
+    def knockback(self) -> Vector:
+        return vector_from(self.raw.getKnockback())
+
+    @knockback.setter
+    def knockback(self, vec: Vector):
+        self.raw.setKnockback(vec.raw)
+
+    def cancel(self):
+        self._guarded_cancel()
+
+    def __repr__(self):
+        return f"EntityKnockbackEvent({self.entity}, {self.cause})"
+
+@dataclass
+class EntityPushedByEntityAttackEvent(_CancellableMixin):
+    raw: object
+    _cancel_window_closed: bool = field(default=False, init=False, repr=False)
+
+    @property
+    def entity(self):
+        return entity_from_raw(self.raw.getEntity())
+
+    @property
+    def attacker(self):
+        return entity_from_raw(self.raw.getPushedBy())
+
+    @property
+    def cause(self):
+        return self.raw.getCause()
+
+    @property
+    def knockback(self) -> Vector:
+        return vector_from(self.raw.getKnockback())
+
+    @knockback.setter
+    def knockback(self, vec: Vector):
+        self.raw.setKnockback(vec.raw)
+
+    def cancel(self):
+        self._guarded_cancel()
+
+    def __repr__(self):
+        return f"EntityPushedByEntityAttackEvent({self.entity}, {self.attacker})"
 
 @dataclass
 class EntityDeathEvent:
@@ -131,3 +189,56 @@ class PlayerInteractEntityEvent(_CancellableMixin):
 
     def __repr__(self):
         return f"PlayerInteractEntityEvent({self.player}, {self.entity})"
+
+@dataclass
+class ChatEvent(_CancellableMixin):
+    raw: object
+    player: Player = field(default=None, init=False)
+
+    def __post_init__(self):
+        self.player = _wrap_player(self.raw)
+        self._cancel_window_closed = False
+
+    @property
+    def message(self) -> str:
+        from cadmium.utils import serialize_mini_message
+        return serialize_mini_message(self.raw.message())
+
+    @message.setter
+    def message(self, value: str):
+        from cadmium.utils import mm
+        self.raw.message(mm(value))
+
+    @property
+    def original_message(self) -> str:
+        from cadmium.utils import serialize_mini_message
+        return serialize_mini_message(self.raw.originalMessage())
+
+    def cancel(self):
+        self._guarded_cancel()
+
+    def __repr__(self):
+        return f"ChatEvent({self.player}, {self.message!r})"
+
+@dataclass
+class PlayerMoveEvent(_CancellableMixin):
+    raw: object
+    _cancel_window_closed: bool = field(default=False, init=False, repr=False)
+
+    @property
+    def player(self):
+        return Player(raw=self.raw.getPlayer())
+
+    @property
+    def from_(self):
+        return location_from(self.raw.getFrom())
+
+    @property
+    def to(self):
+        return location_from(self.raw.getTo())
+
+    def cancel(self):
+        self._guarded_cancel()
+
+    def __repr__(self):
+        return f"PlayerMoveEvent({self.player}, {self.from_} -> {self.to})"

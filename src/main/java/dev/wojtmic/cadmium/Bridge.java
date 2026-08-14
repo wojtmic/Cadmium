@@ -10,9 +10,12 @@ import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Value;
+import io.papermc.paper.event.entity.EntityKnockbackEvent;
+import io.papermc.paper.event.entity.EntityPushedByEntityAttackEvent;
 
 public class Bridge implements Listener {
 
@@ -79,5 +82,20 @@ public class Bridge implements Listener {
     @EventHandler
     public void onPlayerInteractEntity(PlayerInteractEntityEvent event) {
         dispatch("player_interact_entity", event);
+    }
+
+    @EventHandler
+    public void onEntityKnockback(EntityKnockbackEvent event) {
+        dispatch("entity_knockback", event);
+    }
+
+    @EventHandler
+    public void onEntityPushedByEntityAttack(EntityPushedByEntityAttackEvent event) {
+        dispatch("entity_pushed_by_entity_attack", event);
+    }
+
+    @EventHandler
+    public void onPlayerMove(PlayerMoveEvent event) {
+        dispatch("player_move", event);
     }
 }
