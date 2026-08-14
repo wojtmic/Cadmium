@@ -198,6 +198,22 @@ class Player(LivingEntity):
         finally:
             self.raw.removeAttachment(attachment)
 
+    def send_resource_pack(self, uri: str, hash: str = None, required: bool = False, prompt: str = None):
+        ResourcePackRequest = java.type("net.kyori.adventure.resource.ResourcePackRequest")
+        ResourcePackInfo = java.type("net.kyori.adventure.resource.ResourcePackInfo")
+        UUID = java.type("java.util.UUID")
+
+        info = ResourcePackInfo.resourcePackInfo(UUID.randomUUID(), java.type("java.net.URI").create(uri), "" if hash is None else hash)
+
+        builder = ResourcePackRequest.resourcePackRequest().packs(info).required(required)
+        if prompt is not None:
+            builder = builder.prompt(mm(prompt))
+
+        self.raw.sendResourcePacks(builder.build())
+
+    def remove_resource_packs(self, *uuids):
+        self.raw.removeResourcePacks(*uuids) if uuids else self.raw.removeResourcePacks()
+
 def find_player(name: str):
     raw = _Bukkit.getPlayerExact(name)
     if raw is None:
