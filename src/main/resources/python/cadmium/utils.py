@@ -34,3 +34,7 @@ def get_all_entities_of_type(entity_type=None) -> list:
 
 def get_all_entities() -> list:
     return get_all_entities_of_type(None)
+
+def broadcast(msg: str):
+    _Bukkit = java.type("org.bukkit.Bukkit")
+    _Bukkit.getServer().sendMessage(mm(msg))

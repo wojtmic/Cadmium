@@ -14,6 +14,7 @@ from cadmium.living_entity import *
 from cadmium.virtual_inventory import *
 from cadmium._async import is_async_callable
 from cadmium.vector import *
+from cadmium.server import *
 import builtins
 
 class EVENTS(Enum):

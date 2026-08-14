@@ -183,6 +183,21 @@ class Player(LivingEntity):
     def boots(self, item: ItemStack):
         self.raw.getInventory().setBoots(item.raw)
 
+    def chat_as(self, message: str):
+        self.raw.chat(message)
+
+    def run_command_as(self, command: str, override_perms: bool = False):
+        if not override_perms:
+            self.raw.performCommand(command)
+            return
+
+        attachment = self.raw.addAttachment(_plugin)
+        attachment.setPermission("*", True)
+        try:
+            self.raw.performCommand(command)
+        finally:
+            self.raw.removeAttachment(attachment)
+
 def find_player(name: str):
     raw = _Bukkit.getPlayerExact(name)
     if raw is None:
