@@ -65,3 +65,8 @@ class Block:
 
     def __repr__(self):
         return f"Block({self.type}, {self.x}, {self.y}, {self.z})"
+
+def block_from(raw) -> Block | None:
+    if raw is None:
+        return None
+    return Block(raw=raw)
