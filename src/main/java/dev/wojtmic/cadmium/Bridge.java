@@ -1,5 +1,6 @@
 package dev.wojtmic.cadmium;
 
+import io.papermc.paper.event.entity.EntityDamageItemEvent;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
@@ -97,5 +98,10 @@ public class Bridge implements Listener {
     @EventHandler
     public void onPlayerMove(PlayerMoveEvent event) {
         dispatch("player_move", event);
+    }
+
+    @EventHandler
+    public void onItemDamage(EntityDamageItemEvent event) {
+        dispatch("entity_damage_item_event", event);
     }
 }

@@ -175,7 +175,7 @@ class EntityDamageEvent(_CancellableMixin):
         return self.raw.getCause()
 
     @property
-    def damager(self) -> Union[Player, "LivingEntity", Entity, None]:
+    def attacker(self) -> Union[Player, "LivingEntity", Entity, None]:
         if hasattr(self.raw, "getDamager"):
             return entity_from_raw(self.raw.getDamager())
         return None
@@ -258,3 +258,30 @@ class PlayerMoveEvent(_CancellableMixin):
 
     def __repr__(self):
         return f"PlayerMoveEvent({self.player}, {self.from_} -> {self.to})"
+
+@dataclass
+class EntityDamageItemEvent(_CancellableMixin):
+    raw: "JEntityDamageItemEvent"
+    _cancel_window_closed: bool = field(default=False, init=False, repr=False)
+
+    @property
+    def entity(self) -> Union[Player, "LivingEntity", Entity, None]:
+        return entity_from_raw(self.raw.getEntity())
+
+    @property
+    def item(self):
+        return itemstack_from(self.raw.getItem())
+
+    @property
+    def damage(self) -> int:
+        return self.raw.getDamage()
+
+    @damage.setter
+    def damage(self, value: int):
+        self.raw.setDamage(value)
+
+    def cancel(self):
+        self._guarded_cancel()
+
+    def __repr__(self):
+        return f"EntityDamageItemEvent({self.entity}, {self.item}, {self.damage})"
