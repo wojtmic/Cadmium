@@ -153,7 +153,7 @@ class LivingEntity(Entity):
     @property
     def target_entity(self):
         loc = self.raw.getEyeLocation()
-        result = self.raw.getWorld().rayTraceEntities(
+        result = self.world.raw.rayTraceEntities(
             loc,
             loc.getDirection(),
             100.0,

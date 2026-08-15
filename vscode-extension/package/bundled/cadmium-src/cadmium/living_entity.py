@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 import java
-from cadmium.entity import Entity
+from cadmium.entity import Entity, entity_from_raw
+from cadmium.block import block_from
 
 _Attribute = java.type("org.bukkit.attribute.Attribute")
 Attributes = _Attribute
@@ -22,14 +23,14 @@ class LivingEntity(Entity):
         return self.raw.getAttribute(Attributes.MAX_HEALTH).getValue()
 
     def kill(self):
-        self.raw.setHealth(0.0)
+        self.raw.kill()
 
     @property
-    def fire_ticks(self) -> int:
+    def burn_time(self) -> int:
         return self.raw.getFireTicks()
 
-    @fire_ticks.setter
-    def fire_ticks(self, val: int):
+    @burn_time.setter
+    def burn_time(self, val: int):
         self.raw.setFireTicks(val)
 
     @property
@@ -79,9 +80,9 @@ class LivingEntity(Entity):
     def last_damage_cause(self):
         return self.raw.getLastDamageCause()
 
-    @property
-    def equipment(self):
-        return self.raw.getEquipment()
+    # @property
+    # def equipment(self):
+    #     return self.raw.getEquipment()
 
     @property
     def tool(self):
@@ -136,6 +137,38 @@ class LivingEntity(Entity):
     @boots.setter
     def boots(self, item):
         self.raw.getEquipment().setBoots(item.raw)
+
+    def heal(self, amount: int = 0):
+        if not amount: self.health = self.max_health
+        else: self.health += amount
+
+    @property
+    def burning(self) -> bool:
+        return self.raw.getFireTicks() > 0
+
+    @property
+    def alive(self) -> bool:
+        return not self.raw.isDead()
+
+    @property
+    def target_entity(self):
+        loc = self.raw.getEyeLocation()
+        result = self.world.raw.rayTraceEntities(
+            loc,
+            loc.getDirection(),
+            100.0,
+            lambda e: e != self.raw
+        )
+        return entity_from_raw(result.getHitEntity()) if result else None
+
+    @property
+    def target_block(self):
+        block = self.raw.getTargetBlockExact(100)
+        return block_from(block) if block else None
+
+    def get_target_block(self, dist: int = 100):
+        block = self.raw.getTargetBlockExact(dist)
+        return block_from(block) if block else None
 
     def __repr__(self):
         return f"LivingEntity({self.raw.getType()}, {self.uuid})"

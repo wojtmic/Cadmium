@@ -273,16 +273,16 @@ def get_all_players() -> list:
     return [Player(raw=p) for p in _Bukkit.getOnlinePlayers()]
 
 def play_sound_at_location(loc: Location, sound: str, volume: float = 1, pitch: float = 1):
-    loc.world.playSound(loc.raw, sound, volume, pitch)
+    loc.world.raw.playSound(loc.raw, sound, volume, pitch)
 
 def display_particle_at_location(loc: Location, particle: str, count: int = 1, offset_x: float = 0, offset_y: float = 0, offset_z: float = 0, extra: float = 0, data=None):
     Registry = java.type("org.bukkit.Registry")
     NamespacedKey = java.type("org.bukkit.NamespacedKey")
     p = Registry.PARTICLE_TYPE.get(NamespacedKey.minecraft(particle))
     if data is not None:
-        loc.world.spawnParticle(p, loc.raw, count, offset_x, offset_y, offset_z, extra, data)
+        loc.world.raw.spawnParticle(p, loc.raw, count, offset_x, offset_y, offset_z, extra, data)
     else:
-        loc.world.spawnParticle(p, loc.raw, count, offset_x, offset_y, offset_z, extra)
+        loc.world.raw.spawnParticle(p, loc.raw, count, offset_x, offset_y, offset_z, extra)
 
 def dust_options(color: tuple[int, int, int], size: float = 1.0):
     DustOptions = java.type("org.bukkit.Particle$DustOptions")

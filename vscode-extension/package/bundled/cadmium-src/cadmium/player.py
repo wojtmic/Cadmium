@@ -214,6 +214,54 @@ class Player(LivingEntity):
     def remove_resource_packs(self, *uuids):
         self.raw.removeResourcePacks(*uuids) if uuids else self.raw.removeResourcePacks()
 
+    @property
+    def blocking(self) -> bool:
+        return self.raw.isBlocking()
+
+    def play_sound(self, sound: str, volume: float = 1, pitch: float = 1):
+        self.raw.playSound(self.raw.getLocation(), sound, volume, pitch)
+
+    def display_particle(self, particle: str, count: int = 1, offset_x: float = 0, offset_y: float = 0, offset_z: float = 0, extra: float = 0, data=None):
+        Registry = java.type("org.bukkit.Registry")
+        NamespacedKey = java.type("org.bukkit.NamespacedKey")
+        p = Registry.PARTICLE_TYPE.get(NamespacedKey.minecraft(particle))
+        if data is not None:
+            self.raw.spawnParticle(p, self.raw.getLocation(), count, offset_x, offset_y, offset_z, extra, data)
+        else:
+            self.raw.spawnParticle(p, self.raw.getLocation(), count, offset_x, offset_y, offset_z, extra)
+
+    @property
+    def fastboard_title(self) -> str:
+        from cadmium.fastboard import _entry
+        entry = _entry(self)
+        return entry[1] if entry else ""
+
+    @fastboard_title.setter
+    def fastboard_title(self, title: str):
+        from cadmium.fastboard import _get_or_create
+        entry = _get_or_create(self)
+        entry[0].updateTitle(mm(title))
+        entry[1] = title
+
+    @property
+    def fastboard(self) -> list:
+        from cadmium.fastboard import _get_or_create
+        entry = _get_or_create(self)
+        return entry[2]
+
+    @fastboard.setter
+    def fastboard(self, lines: list):
+        if len(lines) > 15:
+            raise ValueError(f"fastboard supports at most 15 lines, got {len(lines)}")
+        from cadmium.fastboard import _get_or_create, _FastboardLines
+        entry = _get_or_create(self)
+        entry[0].updateLines([mm(line) for line in lines])
+        entry[2] = _FastboardLines(entry[0], lines)
+
+    def clear_fastboard(self):
+        from cadmium.fastboard import _clear
+        _clear(self)
+
 def find_player(name: str):
     raw = _Bukkit.getPlayerExact(name)
     if raw is None:
@@ -223,3 +271,26 @@ def find_player(name: str):
 
 def get_all_players() -> list:
     return [Player(raw=p) for p in _Bukkit.getOnlinePlayers()]
+
+def play_sound_at_location(loc: Location, sound: str, volume: float = 1, pitch: float = 1):
+    loc.world.raw.playSound(loc.raw, sound, volume, pitch)
+
+def display_particle_at_location(loc: Location, particle: str, count: int = 1, offset_x: float = 0, offset_y: float = 0, offset_z: float = 0, extra: float = 0, data=None):
+    Registry = java.type("org.bukkit.Registry")
+    NamespacedKey = java.type("org.bukkit.NamespacedKey")
+    p = Registry.PARTICLE_TYPE.get(NamespacedKey.minecraft(particle))
+    if data is not None:
+        loc.world.raw.spawnParticle(p, loc.raw, count, offset_x, offset_y, offset_z, extra, data)
+    else:
+        loc.world.raw.spawnParticle(p, loc.raw, count, offset_x, offset_y, offset_z, extra)
+
+def dust_options(color: tuple[int, int, int], size: float = 1.0):
+    DustOptions = java.type("org.bukkit.Particle$DustOptions")
+    Color = java.type("org.bukkit.Color")
+    r, g, b = color
+    return DustOptions(Color.fromRGB(r, g, b), size)
+
+Material = java.type('org.bukkit.Material')
+def item_particle(mat: Material):
+    ItemStack = java.type("org.bukkit.inventory.ItemStack")
+    return ItemStack(mat)

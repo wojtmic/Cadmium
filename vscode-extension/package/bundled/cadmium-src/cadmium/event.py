@@ -5,6 +5,7 @@ from cadmium.entity import Entity, entity_from_raw
 from cadmium.inventory import itemstack_from
 from cadmium.vector import Vector, vector_from
 from cadmium.location import Location, location_from
+from cadmium.block import block_from
 
 if TYPE_CHECKING:
     from cadmium.living_entity import LivingEntity
@@ -175,7 +176,7 @@ class EntityDamageEvent(_CancellableMixin):
         return self.raw.getCause()
 
     @property
-    def damager(self) -> Union[Player, "LivingEntity", Entity, None]:
+    def attacker(self) -> Union[Player, "LivingEntity", Entity, None]:
         if hasattr(self.raw, "getDamager"):
             return entity_from_raw(self.raw.getDamager())
         return None
@@ -258,3 +259,74 @@ class PlayerMoveEvent(_CancellableMixin):
 
     def __repr__(self):
         return f"PlayerMoveEvent({self.player}, {self.from_} -> {self.to})"
+
+@dataclass
+class EntityDamageItemEvent(_CancellableMixin):
+    raw: "JEntityDamageItemEvent"
+    _cancel_window_closed: bool = field(default=False, init=False, repr=False)
+
+    @property
+    def entity(self) -> Union[Player, "LivingEntity", Entity, None]:
+        return entity_from_raw(self.raw.getEntity())
+
+    @property
+    def item(self):
+        return itemstack_from(self.raw.getItem())
+
+    @property
+    def damage(self) -> int:
+        return self.raw.getDamage()
+
+    @damage.setter
+    def damage(self, value: int):
+        self.raw.setDamage(value)
+
+    def cancel(self):
+        self._guarded_cancel()
+
+    def __repr__(self):
+        return f"EntityDamageItemEvent({self.entity}, {self.item}, {self.damage})"
+
+@dataclass
+class PlayerInteractEvent(_CancellableMixin):
+    raw: "JPlayerInteractEvent"
+    _cancel_window_closed: bool = field(default=False, init=False, repr=False)
+
+    @property
+    def player(self) -> Player:
+        return Player(raw=self.raw.getPlayer())
+
+    @property
+    def action(self):
+        return self.raw.getAction()
+
+    @property
+    def item(self):
+        item = self.raw.getItem()
+        return itemstack_from(item) if item is not None else None
+
+    @property
+    def block(self):
+        return block_from(self.raw.getClickedBlock())
+
+    @property
+    def is_right_click(self) -> bool:
+        return self.raw.getAction().name().startswith("RIGHT_CLICK")
+
+    @property
+    def is_left_click(self) -> bool:
+        return self.raw.getAction().name().startswith("LEFT_CLICK")
+
+    @property
+    def is_block_click(self) -> bool:
+        return self.raw.getAction().name().endswith("CLICK_BLOCK")
+
+    @property
+    def is_air_click(self) -> bool:
+        return self.raw.getAction().name().endswith("CLICK_AIR")
+
+    def cancel(self):
+        self._guarded_cancel()
+
+    def __repr__(self):
+        return f"PlayerInteractEvent({self.player}, {self.action})"

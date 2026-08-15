@@ -43,7 +43,8 @@ class Block:
 
     @property
     def world(self):
-        return self.raw.getWorld()
+        from cadmium.world import world_from
+        return world_from(self.raw.getWorld())
 
     @property
     def custom_data(self) -> BlockCustomData:

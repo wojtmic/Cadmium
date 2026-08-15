@@ -52,7 +52,8 @@ class Entity:
 
     @property
     def world(self):
-        return self.raw.getWorld()
+        from cadmium.world import world_from
+        return world_from(self.raw.getWorld())
 
     @property
     def velocity(self):
@@ -137,5 +138,4 @@ def entity_from_uuid(uuid):
 
 
 def spawn_entity(location: Location, entity_type):
-    raw = location.world.spawnEntity(location.raw, entity_type)
-    return entity_from_raw(raw)
+    return location.world.spawn(location, entity_type)

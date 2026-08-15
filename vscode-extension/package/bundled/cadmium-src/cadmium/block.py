@@ -10,6 +10,7 @@ class Block:
 
     @property
     def location(self) -> "Location":
+        from cadmium.location import location_from
         return location_from(self.raw.getLocation())
 
     @property
@@ -42,7 +43,8 @@ class Block:
 
     @property
     def world(self):
-        return self.raw.getWorld()
+        from cadmium.world import world_from
+        return world_from(self.raw.getWorld())
 
     @property
     def custom_data(self) -> BlockCustomData:
@@ -65,3 +67,8 @@ class Block:
 
     def __repr__(self):
         return f"Block({self.type}, {self.x}, {self.y}, {self.z})"
+
+def block_from(raw) -> Block | None:
+    if raw is None:
+        return None
+    return Block(raw=raw)

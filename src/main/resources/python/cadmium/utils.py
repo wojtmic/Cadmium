@@ -24,10 +24,10 @@ def serialize_mini_message(text: str):
     return _MiniMessage.miniMessage().serialize(text)
 
 def get_all_entities_of_type(entity_type=None) -> list:
-    _Bukkit = java.type("org.bukkit.Bukkit")
+    from cadmium.world import get_all_worlds
     results = []
-    for world in _Bukkit.getWorlds():
-        for raw in world.getEntities():
+    for world in get_all_worlds():
+        for raw in world.raw.getEntities():
             if entity_type is None or raw.getType() == entity_type:
                 results.append(entity_from_raw(raw))
     return results
