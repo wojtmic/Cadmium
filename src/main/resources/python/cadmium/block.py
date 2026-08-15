@@ -10,6 +10,7 @@ class Block:
 
     @property
     def location(self) -> "Location":
+        from cadmium.location import location_from
         return location_from(self.raw.getLocation())
 
     @property

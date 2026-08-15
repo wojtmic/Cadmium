@@ -1,6 +1,5 @@
 from dataclasses import dataclass, field
 import java
-from cadmium.block import Block
 
 _JLocation = java.type("org.bukkit.Location")
 
@@ -21,7 +20,8 @@ class Location:
         return self.raw.distance(other.raw)
 
     @property
-    def block(self) -> Block:
+    def block(self) -> "Block":
+        from cadmium.block import Block
         return Block(raw=self.raw.getBlock())
 
     def above(self, n: float = 1.0) -> "Location":
@@ -41,6 +41,9 @@ class Location:
 
     def west(self, n: float = 1.0) -> "Location":
         return Location(self.x - n, self.y, self.z, self.yaw, self.pitch, self.world)
+
+    def explode(self, power: float = 4.0, set_fire: bool = False, break_blocks: bool = True) -> bool:
+        return self.world.createExplosion(self.x, self.y, self.z, power, set_fire, break_blocks)
 
     def __repr__(self):
         return f"Location({self.x}, {self.y}, {self.z})"

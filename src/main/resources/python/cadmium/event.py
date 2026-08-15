@@ -5,6 +5,7 @@ from cadmium.entity import Entity, entity_from_raw
 from cadmium.inventory import itemstack_from
 from cadmium.vector import Vector, vector_from
 from cadmium.location import Location, location_from
+from cadmium.block import block_from
 
 if TYPE_CHECKING:
     from cadmium.living_entity import LivingEntity
@@ -285,3 +286,47 @@ class EntityDamageItemEvent(_CancellableMixin):
 
     def __repr__(self):
         return f"EntityDamageItemEvent({self.entity}, {self.item}, {self.damage})"
+
+@dataclass
+class PlayerInteractEvent(_CancellableMixin):
+    raw: "JPlayerInteractEvent"
+    _cancel_window_closed: bool = field(default=False, init=False, repr=False)
+
+    @property
+    def player(self) -> Player:
+        return Player(raw=self.raw.getPlayer())
+
+    @property
+    def action(self):
+        return self.raw.getAction()
+
+    @property
+    def item(self):
+        item = self.raw.getItem()
+        return itemstack_from(item) if item is not None else None
+
+    @property
+    def block(self):
+        return block_from(self.raw.getClickedBlock())
+
+    @property
+    def is_right_click(self) -> bool:
+        return self.raw.getAction().name().startswith("RIGHT_CLICK")
+
+    @property
+    def is_left_click(self) -> bool:
+        return self.raw.getAction().name().startswith("LEFT_CLICK")
+
+    @property
+    def is_block_click(self) -> bool:
+        return self.raw.getAction().name().endswith("CLICK_BLOCK")
+
+    @property
+    def is_air_click(self) -> bool:
+        return self.raw.getAction().name().endswith("CLICK_AIR")
+
+    def cancel(self):
+        self._guarded_cancel()
+
+    def __repr__(self):
+        return f"PlayerInteractEvent({self.player}, {self.action})"
