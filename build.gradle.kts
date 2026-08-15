@@ -16,6 +16,7 @@ dependencies {
     compileOnly("org.graalvm.python:python-embedding:25.0.3")
     compileOnly("org.apache.commons:commons-compress:1.27.1")
     compileOnly("com.moandjiezana.toml:toml4j:0.7.2")
+    compileOnly("fr.mrmicky:fastboard:2.2.1")
 }
 
 java {

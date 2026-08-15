@@ -62,6 +62,10 @@ def _dispatch(event: EVENTS, raw):
     cls = _event_classes.get(event)
     obj = cls(raw) if cls else Event(raw=raw)
 
+    if event is EVENTS.player_quit and obj.player is not None:
+        from cadmium.fastboard import _clear
+        _clear(obj.player)
+
     if _has_coroutine_manager():
         _coroutine_manager.notify_event(event.value, obj)
 
@@ -79,7 +83,6 @@ def _dispatch(event: EVENTS, raw):
                 handler(obj)
             except BaseException as e:
                 _report_handler_error(event, handler, e)
-
 
 def _report_handler_error(event, handler, exc: BaseException):
     import traceback

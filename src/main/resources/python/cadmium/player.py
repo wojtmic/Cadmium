@@ -230,6 +230,38 @@ class Player(LivingEntity):
         else:
             self.raw.spawnParticle(p, self.raw.getLocation(), count, offset_x, offset_y, offset_z, extra)
 
+    @property
+    def fastboard_title(self) -> str:
+        from cadmium.fastboard import _entry
+        entry = _entry(self)
+        return entry[1] if entry else ""
+
+    @fastboard_title.setter
+    def fastboard_title(self, title: str):
+        from cadmium.fastboard import _get_or_create
+        entry = _get_or_create(self)
+        entry[0].updateTitle(mm(title))
+        entry[1] = title
+
+    @property
+    def fastboard(self) -> list:
+        from cadmium.fastboard import _entry
+        entry = _entry(self)
+        return list(entry[2]) if entry else []
+
+    @fastboard.setter
+    def fastboard(self, lines: list):
+        if len(lines) > 15:
+            raise ValueError(f"fastboard supports at most 15 lines, got {len(lines)}")
+        from cadmium.fastboard import _get_or_create
+        entry = _get_or_create(self)
+        entry[0].updateLines([mm(line) for line in lines])
+        entry[2] = list(lines)
+
+    def clear_fastboard(self):
+        from cadmium.fastboard import _clear
+        _clear(self)
+
 def find_player(name: str):
     raw = _Bukkit.getPlayerExact(name)
     if raw is None:
