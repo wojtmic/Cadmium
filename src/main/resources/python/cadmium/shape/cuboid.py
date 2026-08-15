@@ -45,23 +45,71 @@ class Cuboid(Shape):
     def volume(self) -> float:
         return self.width * self.height * self.depth
 
-    def positions(self, sub: float = 1.0) -> list[Location]:
-        """All positions filling the solid volume of the cuboid."""
+    def outline(self, sub: float = 1.0) -> list[Location]:
+        """The 12 edges of the cuboid (true wireframe)."""
+        from cadmium.shape.line import Line
         lo, hi = self.min, self.max
         w = lo.world
 
-        x_steps = max(1, round(self.width / sub)) if self.width else 0
-        y_steps = max(1, round(self.height / sub)) if self.height else 0
-        z_steps = max(1, round(self.depth / sub)) if self.depth else 0
+        c = {
+            "000": Location(lo.x, lo.y, lo.z, lo.yaw, lo.pitch, w),
+            "100": Location(hi.x, lo.y, lo.z, lo.yaw, lo.pitch, w),
+            "010": Location(lo.x, hi.y, lo.z, lo.yaw, lo.pitch, w),
+            "001": Location(lo.x, lo.y, hi.z, lo.yaw, lo.pitch, w),
+            "110": Location(hi.x, hi.y, lo.z, lo.yaw, lo.pitch, w),
+            "101": Location(hi.x, lo.y, hi.z, lo.yaw, lo.pitch, w),
+            "011": Location(lo.x, hi.y, hi.z, lo.yaw, lo.pitch, w),
+            "111": Location(hi.x, hi.y, hi.z, lo.yaw, lo.pitch, w),
+        }
+        edges = [
+            ("000", "100"), ("100", "110"), ("110", "010"), ("010", "000"),  # bottom face
+            ("001", "101"), ("101", "111"), ("111", "011"), ("011", "001"),  # top face
+            ("000", "001"), ("100", "101"), ("110", "111"), ("010", "011"),  # verticals
+        ]
 
+        seen = set()
         result = []
-        for i in range(x_steps + 1):
-            x = lo.x + self.width * (i / x_steps) if x_steps else lo.x
-            for j in range(y_steps + 1):
-                y = lo.y + self.height * (j / y_steps) if y_steps else lo.y
-                for k in range(z_steps + 1):
-                    z = lo.z + self.depth * (k / z_steps) if z_steps else lo.z
-                    result.append(Location(x, y, z, lo.yaw, lo.pitch, w))
+        for a_key, b_key in edges:
+            for pos in Line(c[a_key], c[b_key]).positions(sub):
+                key = (round(pos.x, 4), round(pos.y, 4), round(pos.z, 4))
+                if key not in seen:
+                    seen.add(key)
+                    result.append(pos)
+        return result
+
+    def positions(self, sub: float = 1.0) -> list[Location]:
+        """Positions on the 6 faces of the cuboid (the hollow shell)."""
+        from cadmium.shape.rectangle import Rectangle
+        lo, hi = self.min, self.max
+        w = lo.world
+
+        c = {
+            "000": Location(lo.x, lo.y, lo.z, lo.yaw, lo.pitch, w),
+            "100": Location(hi.x, lo.y, lo.z, lo.yaw, lo.pitch, w),
+            "010": Location(lo.x, hi.y, lo.z, lo.yaw, lo.pitch, w),
+            "001": Location(lo.x, lo.y, hi.z, lo.yaw, lo.pitch, w),
+            "110": Location(hi.x, hi.y, lo.z, lo.yaw, lo.pitch, w),
+            "101": Location(hi.x, lo.y, hi.z, lo.yaw, lo.pitch, w),
+            "011": Location(lo.x, hi.y, hi.z, lo.yaw, lo.pitch, w),
+            "111": Location(hi.x, hi.y, hi.z, lo.yaw, lo.pitch, w),
+        }
+        faces = [
+            (c["000"], c["101"]),  # bottom
+            (c["010"], c["111"]),  # top
+            (c["000"], c["011"]),  # -x side
+            (c["100"], c["111"]),  # +x side
+            (c["000"], c["110"]),  # -z side
+            (c["001"], c["111"]),  # +z side
+        ]
+
+        seen = set()
+        result = []
+        for a, b in faces:
+            for pos in Rectangle(a, b).positions(sub):
+                key = (round(pos.x, 4), round(pos.y, 4), round(pos.z, 4))
+                if key not in seen:
+                    seen.add(key)
+                    result.append(pos)
         return result
 
     def interior(self, sub: float = 1.0) -> list[Location]:
@@ -81,41 +129,6 @@ class Cuboid(Shape):
                 for k in range(1, z_steps):
                     z = lo.z + self.depth * (k / z_steps) if z_steps else lo.z
                     result.append(Location(x, y, z, lo.yaw, lo.pitch, w))
-        return result
-
-    def outline(self, sub: float = 1.0) -> list[Location]:
-        """Positions on the 6 faces of the cuboid (the hollow shell)."""
-        from cadmium.shape.rectangle import Rectangle
-        lo, hi = self.min, self.max
-        w = lo.world
-
-        corners = {
-            "000": Location(lo.x, lo.y, lo.z, lo.yaw, lo.pitch, w),
-            "100": Location(hi.x, lo.y, lo.z, lo.yaw, lo.pitch, w),
-            "010": Location(lo.x, hi.y, lo.z, lo.yaw, lo.pitch, w),
-            "001": Location(lo.x, lo.y, hi.z, lo.yaw, lo.pitch, w),
-            "110": Location(hi.x, hi.y, lo.z, lo.yaw, lo.pitch, w),
-            "101": Location(hi.x, lo.y, hi.z, lo.yaw, lo.pitch, w),
-            "011": Location(lo.x, hi.y, hi.z, lo.yaw, lo.pitch, w),
-            "111": Location(hi.x, hi.y, hi.z, lo.yaw, lo.pitch, w),
-        }
-        faces = [
-            (corners["000"], corners["101"]),  # bottom
-            (corners["010"], corners["111"]),  # top
-            (corners["000"], corners["011"]),  # -x side
-            (corners["100"], corners["111"]),  # +x side
-            (corners["000"], corners["110"]),  # -z side
-            (corners["001"], corners["111"]),  # +z side
-        ]
-
-        seen = set()
-        result = []
-        for a, b in faces:
-            for pos in Rectangle(a, b).positions(sub):
-                key = (round(pos.x, 4), round(pos.y, 4), round(pos.z, 4))
-                if key not in seen:
-                    seen.add(key)
-                    result.append(pos)
         return result
 
     def contains(self, position: Location, tolerance: float = 0.01) -> bool:

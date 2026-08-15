@@ -127,7 +127,7 @@ class ItemStack:
         meta = self.raw.getItemMeta()
         if meta is not None and meta.hasDisplayName():
             return serialize_mini_message(meta.displayName())
-        return None
+        return serialize_mini_message(self.raw.effectiveName())
 
     @display_name.setter
     def display_name(self, value: str):
@@ -193,13 +193,13 @@ class ItemStack:
     def durability(self) -> int:
         meta = self.raw.getItemMeta()
         if meta is not None and hasattr(meta, "getDamage"):
-            return meta.getDamage()
+            return self.max_durability - self.raw.getDamage()
         return None
 
     @durability.setter
     def durability(self, value: int):
         meta = self.raw.getItemMeta()
-        meta.setDamage(value)
+        meta.setDamage(value - self.max_durability)
         self.raw.setItemMeta(meta)
 
     @property

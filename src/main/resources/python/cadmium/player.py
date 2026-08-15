@@ -245,18 +245,18 @@ class Player(LivingEntity):
 
     @property
     def fastboard(self) -> list:
-        from cadmium.fastboard import _entry
-        entry = _entry(self)
-        return list(entry[2]) if entry else []
+        from cadmium.fastboard import _get_or_create
+        entry = _get_or_create(self)
+        return entry[2]
 
     @fastboard.setter
     def fastboard(self, lines: list):
         if len(lines) > 15:
             raise ValueError(f"fastboard supports at most 15 lines, got {len(lines)}")
-        from cadmium.fastboard import _get_or_create
+        from cadmium.fastboard import _get_or_create, _FastboardLines
         entry = _get_or_create(self)
         entry[0].updateLines([mm(line) for line in lines])
-        entry[2] = list(lines)
+        entry[2] = _FastboardLines(entry[0], lines)
 
     def clear_fastboard(self):
         from cadmium.fastboard import _clear
