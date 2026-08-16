@@ -110,3 +110,36 @@ class ItemCustomData:
 
     def __repr__(self):
         return f"ItemCustomData({self._item})"
+
+class WorldCustomData:
+    def __init__(self, raw_holder):
+        self._holder = raw_holder
+
+    def __setitem__(self, name: str, value):
+        pdt = _infer_type(value)
+        self._holder.getPersistentDataContainer().set(_key(name), pdt, value)
+
+    def __getitem__(self, name: str):
+        val = self.get(name)
+        if val is None:
+            raise KeyError(name)
+        return val
+
+    def get(self, name: str, default=None):
+        container = self._holder.getPersistentDataContainer()
+        key = _key(name)
+        for pdt in _types():
+            if container.has(key, pdt):
+                return container.get(key, pdt)
+        return default
+
+    def __contains__(self, name: str):
+        container = self._holder.getPersistentDataContainer()
+        key = _key(name)
+        return any(container.has(key, pdt) for pdt in _types())
+
+    def __delitem__(self, name: str):
+        self._holder.getPersistentDataContainer().remove(_key(name))
+
+    def __repr__(self):
+        return f"WorldCustomData({self._holder})"

@@ -73,5 +73,20 @@ class Sphere(Shape):
         dz = position.z - self.center.z
         return (dx * dx + dy * dy + dz * dz) <= (self.radius + tolerance) ** 2
 
+    def entities(self) -> list:
+        import java
+        from cadmium.entity import entity_from_raw
+
+        _BoundingBox = java.type("org.bukkit.util.BoundingBox")
+        c = self.center
+        r = self.radius
+        box = _BoundingBox(c.x - r, c.y - r, c.z - r, c.x + r, c.y + r, c.z + r)
+
+        candidates = self.center.world.raw.getNearbyEntities(box)
+        return [
+            entity_from_raw(e) for e in candidates
+            if self.contains(location_from(e.getLocation()))
+        ]
+
     def __repr__(self):
         return f"Sphere({self.center}, r={self.radius})"

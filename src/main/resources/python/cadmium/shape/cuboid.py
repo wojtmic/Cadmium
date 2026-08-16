@@ -141,5 +141,14 @@ class Cuboid(Shape):
                 lo.z - tolerance <= position.z <= hi.z + tolerance
         )
 
+    def entities(self) -> list:
+        import java
+        from cadmium.entity import entity_from_raw
+
+        _BoundingBox = java.type("org.bukkit.util.BoundingBox")
+        lo, hi = self.min, self.max
+        box = _BoundingBox(lo.x, lo.y, lo.z, hi.x, hi.y, hi.z)
+        return [entity_from_raw(e) for e in self.corner1.world.raw.getNearbyEntities(box)]
+
     def __repr__(self):
         return f"Cuboid({self.corner1}, {self.corner2})"

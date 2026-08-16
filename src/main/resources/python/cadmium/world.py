@@ -104,6 +104,11 @@ class World:
     def gamerules(self) -> GameRules:
         return GameRules(self.raw)
 
+    @property
+    def custom_data(self):
+        from cadmium.data import WorldCustomData
+        return WorldCustomData(self.raw)
+
     def __eq__(self, other):
         if not isinstance(other, World):
             return NotImplemented

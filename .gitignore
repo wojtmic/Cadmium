@@ -10,3 +10,4 @@ hs_err_pid*
 run
 *.vsix
 node_modules/
+vscode-extension/package/bundled/cadmium-src/
