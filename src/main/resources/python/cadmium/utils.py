@@ -38,3 +38,12 @@ def get_all_entities() -> list:
 def broadcast(msg: str):
     _Bukkit = java.type("org.bukkit.Bukkit")
     _Bukkit.getServer().sendMessage(mm(msg))
+
+def select_entities(sender, selector: str) -> list:
+    import java
+    from cadmium.entity import entity_from_raw
+
+    _Bukkit = java.type("org.bukkit.Bukkit")
+    raw_sender = sender.raw if hasattr(sender, "raw") else sender
+    results = _Bukkit.selectEntities(raw_sender, selector)
+    return [entity_from_raw(e) for e in results]
