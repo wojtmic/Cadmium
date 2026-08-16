@@ -3,6 +3,7 @@ from cadmium.data import BlockCustomData
 import java
 
 Material = java.type("org.bukkit.Material")
+_Lightable = java.type("org.bukkit.block.data.Lightable")
 
 @dataclass
 class Block:
@@ -19,6 +20,14 @@ class Block:
 
     @type.setter
     def type(self, material):
+        self.raw.setType(material)
+
+    @property
+    def material(self):
+        return self.raw.getType()
+
+    @material.setter
+    def material(self, material):
         self.raw.setType(material)
 
     @property
@@ -64,6 +73,21 @@ class Block:
 
     def get_relative(self, dx: int, dy: int, dz: int) -> "Block":
         return Block(raw=self.raw.getRelative(dx, dy, dz))
+
+    @property
+    def lit(self) -> bool:
+        data = self.raw.getBlockData()
+        if not isinstance(data, _Lightable):
+            return None
+        return data.isLit()
+
+    @lit.setter
+    def lit(self, val: bool):
+        data = self.raw.getBlockData()
+        if not isinstance(data, _Lightable):
+            raise TypeError(f"{self.type} is not Lightable")
+        data.setLit(val)
+        self.raw.setBlockData(data)
 
     def __repr__(self):
         return f"Block({self.type}, {self.x}, {self.y}, {self.z})"
