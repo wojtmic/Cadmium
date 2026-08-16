@@ -37,7 +37,8 @@ def command(name: str, permission: str = None, completer=None):
             if completer is None:
                 return []
             arg_id = len(args) - 1
-            return completer(arg_id) or []
+            full_args = list(args)
+            return completer(arg_id, full_args) or []
 
         _command_manager.register(name, executor, java_completer)
         return func
