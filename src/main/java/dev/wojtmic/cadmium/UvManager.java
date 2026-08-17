@@ -52,23 +52,23 @@ public class UvManager {
                 if (!Files.exists(uvBinary)) {
                     uvBinary = Cadmium.dataFolder.toPath().resolve(isWindows() ? "uv.exe" : "uv").toAbsolutePath();
                     if (!Files.exists(uvBinary)) {
-                        logger.info("[Cadmium] Downloading uv...");
+                        logger.info("Downloading uv...");
                         downloadUv();
-                        logger.info("[Cadmium] uv downloaded.");
+                        logger.info("uv downloaded.");
                     }
-                    logger.info("[Cadmium] Using self-installed uv.");
+                    logger.info("Using self-installed uv.");
                 } else {
-                    logger.info("[Cadmium] Using system uv.");
+                    logger.info("Using system uv.");
                 }
             }
             case "download" -> {
                 uvBinary = Cadmium.dataFolder.toPath().resolve(isWindows() ? "uv.exe" : "uv").toAbsolutePath();
                 if (!Files.exists(uvBinary)) {
-                    logger.info("[Cadmium] Downloading uv...");
+                    logger.info("Downloading uv...");
                     downloadUv();
-                    logger.info("[Cadmium] uv downloaded.");
+                    logger.info("uv downloaded.");
                 }
-                logger.info("[Cadmium] Using self-installed uv.");
+                logger.info("Using self-installed uv.");
             }
             case "system" -> {
                 if (isWindows()) {
@@ -85,9 +85,9 @@ public class UvManager {
                     }
                 }
                 if (!Files.exists(uvBinary)) {
-                    logger.severe("[Cadmium] uv isn't installed! Change uv-path or install uv system-wide.");
+                    logger.severe("uv isn't installed! Change uv-path or install uv system-wide.");
                 }
-                logger.info("[Cadmium] Using system uv.");
+                logger.info("Using system uv.");
             }
             default -> uvBinary = Path.of(uvOverride);
         }
@@ -98,12 +98,12 @@ public class UvManager {
         }
 
         if (autoSync) {
-            logger.info("[Cadmium] Syncing Python Project...");
+            logger.info("Syncing Python Project...");
             runProcess(
                     java.util.Map.of("UV_PROJECT_ENVIRONMENT", getVenvPath().toString()),
                     uvBinary.toString(), "sync"
             );
-            logger.info("[Cadmium] Sync complete.");
+            logger.info("Sync complete.");
         }
 
         bundledPython = extractBundledPython();

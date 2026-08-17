@@ -1,12 +1,17 @@
 package dev.wojtmic.cadmium;
 
+import net.kyori.adventure.audience.Audience;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -61,5 +66,18 @@ public class Utils {
         }
 
         return output == null ? "" : output.trim();
+    }
+
+
+    public static List<Audience> getReloadRecipients(String permission, Player exclude) {
+        List<Audience> recipients = new ArrayList<>();
+        recipients.add(Bukkit.getConsoleSender());
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            if (p.equals(exclude)) continue;
+            if (p.hasPermission(permission)) {
+                recipients.add(p);
+            }
+        }
+        return recipients;
     }
 }

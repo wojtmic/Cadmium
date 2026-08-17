@@ -2,9 +2,11 @@ package dev.wojtmic.cadmium;
 
 import io.papermc.paper.command.brigadier.Commands;
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
+import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
+import org.bukkit.entity.Player;
 import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.graalvm.polyglot.Context;
@@ -18,6 +20,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import com.moandjiezana.toml.Toml;
+
+import static dev.wojtmic.cadmium.Utils.getReloadRecipients;
 
 public final class Cadmium extends JavaPlugin {
 
@@ -236,8 +240,20 @@ public final class Cadmium extends JavaPlugin {
             getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS, event -> {
                 var reloadNode = Commands.literal("reload")
                         .executes(ctx -> {
+                            Player triggeringPlayer = (ctx.getSource().getSender() instanceof Player p) ? p : null;
+
                             Component msg1 = MiniMessage.miniMessage().deserialize("[<#FFD93D>Cadmium</#FFD93D>] <gold>Reloading...</gold>");
                             ctx.getSource().getSender().sendMessage(msg1);
+
+                            String senderName = ctx.getSource().getSender().getName();
+                            Component msg11 = MiniMessage.miniMessage().deserialize(
+                                    "[<#FFD93D>Cadmium</#FFD93D>] <aqua>" + senderName + "</aqua> is reloading"
+                            );
+
+                            for (Audience a : getReloadRecipients("cadmium.admin", triggeringPlayer)) {
+                                a.sendMessage(msg11);
+                            }
+
                             long start = System.nanoTime();
 
                             try {
