@@ -64,10 +64,21 @@ public final class Cadmium extends JavaPlugin {
             return;
         }
 
+        ClassLoader combinedLoader = new ClassLoader(getClassLoader()) {
+            @Override
+            protected Class<?> findClass(String name) throws ClassNotFoundException {
+                for (org.bukkit.plugin.Plugin p : getServer().getPluginManager().getPlugins()) {
+                    try {
+                        return p.getClass().getClassLoader().loadClass(name);
+                    } catch (ClassNotFoundException ignored) {}
+                }
+                throw new ClassNotFoundException(name);
+            }
+        };
+
         context = GraalPyResources.contextBuilder(getDataFolder().toPath().toAbsolutePath())
                 .allowAllAccess(true)
-//                .option("python.PosixModuleBackend", "native")
-                .hostClassLoader(getClassLoader())
+                .hostClassLoader(combinedLoader)
                 .allowHostClassLookup(className -> true)
                 .build();
 

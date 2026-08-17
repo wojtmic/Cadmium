@@ -13,6 +13,9 @@ if TYPE_CHECKING:
         JEntityKnockbackEvent,
         JEntityPushedByEntityAttackEvent,
         JEntityDeathEvent,
+        JPlayerDeathEvent,
+        JPlayerJoinEvent,
+        JPlayerQuitEvent,
         JEntityDamageEvent,
         JPlayerInteractEntityEvent,
         JAsyncChatEvent,
@@ -39,10 +42,7 @@ class _CancellableMixin:
                 "first await, or restructure the handler so the decision "
                 "to cancel happens synchronously."
             )
-        # `raw` isn't declared on the mixin itself - it comes from whichever
-        # dataclass this is combined with, each of which types it as a real
-        # Jxxx class. Static analysis can't see through that composition.
-        self.raw.setCancelled(True)  # type: ignore[attr-defined]
+        self.raw.setCancelled(True)
 
 
 @dataclass
@@ -56,6 +56,54 @@ class Event(_CancellableMixin):
 
     def cancel(self):
         self._guarded_cancel()
+
+@dataclass
+class PlayerJoinEvent:
+    raw: "JPlayerJoinEvent"
+
+    @property
+    def player(self) -> Player:
+        return Player(raw=self.raw.getPlayer())
+
+    @property
+    def join_message(self) -> Union[str, None]:
+        from cadmium.utils import serialize_mini_message
+        message = self.raw.joinMessage()
+        return serialize_mini_message(message) if message is not None else None
+
+    @join_message.setter
+    def join_message(self, value: Union[str, None]):
+        from cadmium.utils import mm
+        self.raw.joinMessage(mm(value) if value is not None else None)
+
+    def __repr__(self):
+        return f"PlayerJoinEvent({self.player})"
+
+@dataclass
+class PlayerQuitEvent:
+    raw: "JPlayerQuitEvent"
+
+    @property
+    def player(self) -> Player:
+        return Player(raw=self.raw.getPlayer())
+
+    @property
+    def reason(self):
+        return self.raw.getReason()
+
+    @property
+    def quit_message(self) -> Union[str, None]:
+        from cadmium.utils import serialize_mini_message
+        message = self.raw.quitMessage()
+        return serialize_mini_message(message) if message is not None else None
+
+    @quit_message.setter
+    def quit_message(self, value: Union[str, None]):
+        from cadmium.utils import mm
+        self.raw.quitMessage(mm(value) if value is not None else None)
+
+    def __repr__(self):
+        return f"PlayerQuitEvent({self.player})"
 
 @dataclass
 class EntityKnockbackEvent(_CancellableMixin):
@@ -148,6 +196,95 @@ class EntityDeathEvent:
 
     def __repr__(self):
         return f"EntityDeathEvent({self.entity})"
+
+
+@dataclass
+class PlayerDeathEvent(_CancellableMixin):
+    raw: "JPlayerDeathEvent"
+    _cancel_window_closed: bool = field(default=False, init=False, repr=False)
+
+    @property
+    def player(self) -> Player:
+        return Player(raw=self.raw.getPlayer())
+
+    @property
+    def killer(self) -> Union[Player, "LivingEntity", Entity, None]:
+        killer = self.raw.getEntity().getKiller()
+        return entity_from_raw(killer) if killer is not None else None
+
+    @property
+    def drops(self) -> list:
+        return [itemstack_from(i) for i in self.raw.getDrops()]
+
+    def clear_drops(self):
+        self.raw.getDrops().clear()
+
+    def add_drop(self, item):
+        self.raw.getDrops().add(item.raw)
+
+    @property
+    def dropped_exp(self) -> int:
+        return self.raw.getDroppedExp()
+
+    @dropped_exp.setter
+    def dropped_exp(self, value: int):
+        self.raw.setDroppedExp(value)
+
+    @property
+    def death_message(self) -> str:
+        from cadmium.utils import serialize_mini_message
+        return serialize_mini_message(self.raw.deathMessage())
+
+    @death_message.setter
+    def death_message(self, value: str):
+        from cadmium.utils import mm
+        self.raw.deathMessage(mm(value))
+
+    @property
+    def keep_inventory(self) -> bool:
+        return self.raw.getKeepInventory()
+
+    @keep_inventory.setter
+    def keep_inventory(self, value: bool):
+        self.raw.setKeepInventory(value)
+
+    @property
+    def keep_level(self) -> bool:
+        return self.raw.getKeepLevel()
+
+    @keep_level.setter
+    def keep_level(self, value: bool):
+        self.raw.setKeepLevel(value)
+
+    @property
+    def new_exp(self) -> int:
+        return self.raw.getNewExp()
+
+    @new_exp.setter
+    def new_exp(self, value: int):
+        self.raw.setNewExp(value)
+
+    @property
+    def new_level(self) -> int:
+        return self.raw.getNewLevel()
+
+    @new_level.setter
+    def new_level(self, value: int):
+        self.raw.setNewLevel(value)
+
+    @property
+    def new_total_exp(self) -> int:
+        return self.raw.getNewTotalExp()
+
+    @new_total_exp.setter
+    def new_total_exp(self, value: int):
+        self.raw.setNewTotalExp(value)
+
+    def cancel(self):
+        self._guarded_cancel()
+
+    def __repr__(self):
+        return f"PlayerDeathEvent({self.player})"
 
 
 @dataclass

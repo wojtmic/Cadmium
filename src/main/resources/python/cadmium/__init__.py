@@ -45,7 +45,10 @@ def on(*events: EVENTS):
     return decorator
 
 _event_classes = {
+    EVENTS.player_join: PlayerJoinEvent,
+    EVENTS.player_quit: PlayerQuitEvent,
     EVENTS.entity_death: EntityDeathEvent,
+    EVENTS.player_death: PlayerDeathEvent,
     EVENTS.entity_damage: EntityDamageEvent,
     EVENTS.player_interact_entity: PlayerInteractEntityEvent,
     EVENTS.entity_knockback: EntityKnockbackEvent,

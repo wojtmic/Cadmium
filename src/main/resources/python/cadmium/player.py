@@ -27,6 +27,15 @@ class Player(LivingEntity):
     def display_name(self, value: str):
         self.raw.displayName(mm(value))
 
+    @property
+    def tab_name(self) -> str:
+        from cadmium.utils import serialize_mini_message
+        return serialize_mini_message(self.raw.playerListName())
+
+    @tab_name.setter
+    def tab_name(self, value: str):
+        self.raw.playerListName(mm(value))
+
     def kick(self, msg: str = 'Kicked by an operator.'):
         self.raw.kick(mm(msg))
 
