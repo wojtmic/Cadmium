@@ -29,6 +29,10 @@ class Location:
         from cadmium.block import Block
         return Block(raw=self.raw.getBlock())
 
+    @property
+    def sunlight_level(self) -> int:
+        return self.raw.getBlock().getLightFromSky()
+
     def above(self, n: float = 1.0) -> "Location":
         return Location(self.x, self.y + n, self.z, self.yaw, self.pitch, self.world)
 

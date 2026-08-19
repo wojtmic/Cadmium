@@ -98,6 +98,14 @@ class Player(LivingEntity):
         self.raw.setFoodLevel(val)
 
     @property
+    def saturation(self) -> float:
+        return self.raw.getSaturation()
+
+    @saturation.setter
+    def saturation(self, val: float):
+        self.raw.setSaturation(float(val))
+
+    @property
     def gamemode(self) -> GameMode:
         return self.raw.getGameMode()
 
@@ -140,6 +148,10 @@ class Player(LivingEntity):
     @property
     def inventory(self) -> Inventory:
         return Inventory(raw=self.raw.getInventory())
+
+    @property
+    def ender_chest(self) -> Inventory:
+        return Inventory(raw=self.raw.getEnderChest())
 
     def give(self, item: ItemStack):
         self.inventory.add_item(item)
@@ -303,3 +315,6 @@ Material = java.type('org.bukkit.Material')
 def item_particle(mat: Material):
     ItemStack = java.type("org.bukkit.inventory.ItemStack")
     return ItemStack(mat)
+
+def block_particle(mat: Material):
+    return mat.createBlockData()

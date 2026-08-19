@@ -33,6 +33,10 @@ class EVENTS(Enum):
     player_move = "player_move"
     item_damage_event = "entity_damage_item_event"
     player_interact = "player_interact"
+    command = "command"
+    entity_spawn = "entity_spawn"
+    player_fish = "player_fish"
+    player_gamemode_change = "player_gamemode_change"
 
 _registry: dict[EVENTS, list] = {}
 
@@ -47,6 +51,12 @@ def on(*events: EVENTS):
 _event_classes = {
     EVENTS.player_join: PlayerJoinEvent,
     EVENTS.player_quit: PlayerQuitEvent,
+    EVENTS.command: CommandEvent,
+    EVENTS.block_break: BlockBreakEvent,
+    EVENTS.block_place: BlockPlaceEvent,
+    EVENTS.entity_spawn: EntitySpawnEvent,
+    EVENTS.player_fish: PlayerFishEvent,
+    EVENTS.player_gamemode_change: PlayerGameModeChangeEvent,
     EVENTS.entity_death: EntityDeathEvent,
     EVENTS.player_death: PlayerDeathEvent,
     EVENTS.entity_damage: EntityDamageEvent,

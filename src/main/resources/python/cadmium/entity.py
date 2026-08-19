@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, Union
 import java
 from cadmium.location import Location, location_from
 from cadmium.data import BlockCustomData
+from cadmium.vector import Vector, vector_from
 
 if TYPE_CHECKING:
     from cadmium.player import Player
@@ -57,11 +58,11 @@ class Entity:
 
     @property
     def velocity(self):
-        return self.raw.getVelocity()
+        return vector_from(self.raw.getVelocity())
 
     @velocity.setter
-    def velocity(self, vec):
-        self.raw.setVelocity(vec)
+    def velocity(self, vec: Vector):
+        self.raw.setVelocity(vec.raw)
 
     @property
     def is_on_ground(self) -> bool:

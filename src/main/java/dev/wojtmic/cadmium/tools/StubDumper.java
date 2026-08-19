@@ -46,6 +46,10 @@ public class StubDumper {
             "org.bukkit.event.player.PlayerJoinEvent",
             "org.bukkit.event.player.PlayerQuitEvent",
             "org.bukkit.event.entity.PlayerDeathEvent",
+            "org.bukkit.event.player.PlayerCommandPreprocessEvent",
+            "org.bukkit.event.entity.EntitySpawnEvent",
+            "org.bukkit.event.player.PlayerFishEvent",
+            "org.bukkit.event.player.PlayerGameModeChangeEvent",
             "org.bukkit.event.block.BlockBreakEvent",
             "org.bukkit.event.block.BlockPlaceEvent",
     };

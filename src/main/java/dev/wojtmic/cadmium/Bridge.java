@@ -8,6 +8,7 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.entity.EntitySpawnEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.*;
 import org.graalvm.polyglot.Context;
@@ -105,5 +106,25 @@ public class Bridge implements Listener {
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
         dispatch("player_interact", event);
+    }
+
+    @EventHandler
+    public void onPlayerCommandPreprocess(PlayerCommandPreprocessEvent event) {
+        dispatch("command", event);
+    }
+
+    @EventHandler
+    public void onEntitySpawn(EntitySpawnEvent event) {
+        dispatch("entity_spawn", event);
+    }
+
+    @EventHandler
+    public void onPlayerFish(PlayerFishEvent event) {
+        dispatch("player_fish", event);
+    }
+
+    @EventHandler
+    public void onPlayerGameModeChange(PlayerGameModeChangeEvent event) {
+        dispatch("player_gamemode_change", event);
     }
 }

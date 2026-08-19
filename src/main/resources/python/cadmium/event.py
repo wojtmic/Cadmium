@@ -1,11 +1,14 @@
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Union
-from cadmium.player import Player
+from cadmium.player import Player, GameMode
 from cadmium.entity import Entity, entity_from_raw
 from cadmium.inventory import itemstack_from
 from cadmium.vector import Vector, vector_from
 from cadmium.location import Location, location_from
 from cadmium.block import block_from
+import java
+
+FishState = java.type("org.bukkit.event.player.PlayerFishEvent$State")
 
 if TYPE_CHECKING:
     from cadmium.living_entity import LivingEntity
@@ -16,6 +19,12 @@ if TYPE_CHECKING:
         JPlayerDeathEvent,
         JPlayerJoinEvent,
         JPlayerQuitEvent,
+        JPlayerCommandPreprocessEvent,
+        JBlockBreakEvent,
+        JBlockPlaceEvent,
+        JEntitySpawnEvent,
+        JPlayerFishEvent,
+        JPlayerGameModeChangeEvent,
         JEntityDamageEvent,
         JPlayerInteractEntityEvent,
         JAsyncChatEvent,
@@ -104,6 +113,185 @@ class PlayerQuitEvent:
 
     def __repr__(self):
         return f"PlayerQuitEvent({self.player})"
+
+@dataclass
+class CommandEvent(_CancellableMixin):
+    raw: "JPlayerCommandPreprocessEvent"
+    _cancel_window_closed: bool = field(default=False, init=False, repr=False)
+
+    @property
+    def player(self) -> Player:
+        return Player(raw=self.raw.getPlayer())
+
+    @property
+    def message(self) -> str:
+        return self.raw.getMessage()
+
+    @message.setter
+    def message(self, value: str):
+        self.raw.setMessage(value)
+
+    @property
+    def recipients(self) -> list:
+        return [Player(raw=p) for p in self.raw.getRecipients()]
+
+    def cancel(self):
+        self._guarded_cancel()
+
+    def __repr__(self):
+        return f"CommandEvent({self.player}, {self.message!r})"
+
+@dataclass
+class BlockBreakEvent(_CancellableMixin):
+    raw: "JBlockBreakEvent"
+    _cancel_window_closed: bool = field(default=False, init=False, repr=False)
+
+    @property
+    def player(self) -> Player:
+        return Player(raw=self.raw.getPlayer())
+
+    @property
+    def block(self):
+        return block_from(self.raw.getBlock())
+
+    @property
+    def drop_items(self) -> bool:
+        return self.raw.isDropItems()
+
+    @drop_items.setter
+    def drop_items(self, value: bool):
+        self.raw.setDropItems(value)
+
+    @property
+    def exp_to_drop(self) -> int:
+        return self.raw.getExpToDrop()
+
+    @exp_to_drop.setter
+    def exp_to_drop(self, value: int):
+        self.raw.setExpToDrop(value)
+
+    def cancel(self):
+        self._guarded_cancel()
+
+    def __repr__(self):
+        return f"BlockBreakEvent({self.player}, {self.block})"
+
+@dataclass
+class BlockPlaceEvent(_CancellableMixin):
+    raw: "JBlockPlaceEvent"
+    _cancel_window_closed: bool = field(default=False, init=False, repr=False)
+
+    @property
+    def player(self) -> Player:
+        return Player(raw=self.raw.getPlayer())
+
+    @property
+    def block(self):
+        return block_from(self.raw.getBlockPlaced())
+
+    @property
+    def block_against(self):
+        return block_from(self.raw.getBlockAgainst())
+
+    @property
+    def item_in_hand(self):
+        item = self.raw.getItemInHand()
+        return itemstack_from(item) if item is not None else None
+
+    @property
+    def can_build(self) -> bool:
+        return self.raw.canBuild()
+
+    @can_build.setter
+    def can_build(self, value: bool):
+        self.raw.setBuild(value)
+
+    def cancel(self):
+        self._guarded_cancel()
+
+    def __repr__(self):
+        return f"BlockPlaceEvent({self.player}, {self.block})"
+
+@dataclass
+class EntitySpawnEvent(_CancellableMixin):
+    raw: "JEntitySpawnEvent"
+    _cancel_window_closed: bool = field(default=False, init=False, repr=False)
+
+    @property
+    def entity(self) -> Union[Player, "LivingEntity", Entity, None]:
+        return entity_from_raw(self.raw.getEntity())
+
+    @property
+    def location(self) -> Location:
+        return location_from(self.raw.getLocation())
+
+    def cancel(self):
+        self._guarded_cancel()
+
+    def __repr__(self):
+        return f"EntitySpawnEvent({self.entity})"
+
+@dataclass
+class PlayerFishEvent(_CancellableMixin):
+    raw: "JPlayerFishEvent"
+    _cancel_window_closed: bool = field(default=False, init=False, repr=False)
+
+    @property
+    def player(self) -> Player:
+        return Player(raw=self.raw.getPlayer())
+
+    @property
+    def caught(self) -> Union[Player, "LivingEntity", Entity, None]:
+        return entity_from_raw(self.raw.getCaught())
+
+    @property
+    def hook(self) -> Union[Player, "LivingEntity", Entity, None]:
+        return entity_from_raw(self.raw.getHook())
+
+    @property
+    def hand(self):
+        return self.raw.getHand()
+
+    @property
+    def state(self) -> "FishState":
+        return self.raw.getState()
+
+    @property
+    def exp_to_drop(self) -> int:
+        return self.raw.getExpToDrop()
+
+    @exp_to_drop.setter
+    def exp_to_drop(self, value: int):
+        self.raw.setExpToDrop(value)
+
+    def cancel(self):
+        self._guarded_cancel()
+
+    def __repr__(self):
+        return f"PlayerFishEvent({self.player}, {self.state})"
+
+@dataclass
+class PlayerGameModeChangeEvent(_CancellableMixin):
+    raw: "JPlayerGameModeChangeEvent"
+    _cancel_window_closed: bool = field(default=False, init=False, repr=False)
+
+    @property
+    def player(self) -> Player:
+        return Player(raw=self.raw.getPlayer())
+
+    @property
+    def new_gamemode(self) -> GameMode:
+        return self.raw.getNewGameMode()
+
+    @new_gamemode.setter
+    def new_gamemode(self, value: GameMode):
+        self.raw.setNewGameMode(value)
+
+    def cancel(self):
+        self._guarded_cancel()
+
+    def __repr__(self):
+        return f"PlayerGameModeChangeEvent({self.player}, {self.new_gamemode})"
 
 @dataclass
 class EntityKnockbackEvent(_CancellableMixin):
