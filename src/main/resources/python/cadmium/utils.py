@@ -37,7 +37,7 @@ def get_all_entities() -> list:
 
 def broadcast(msg: str):
     _Bukkit = java.type("org.bukkit.Bukkit")
-    _Bukkit.getServer().sendMessage(mm(msg))
+    _Bukkit.getServer().sendMessage(mm(str(msg)))
 
 def select_entities(sender, selector: str) -> list:
     import java
