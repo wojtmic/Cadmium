@@ -283,6 +283,9 @@ class Player(LivingEntity):
         from cadmium.fastboard import _clear
         _clear(self)
 
+    def has_permission(self, perm: str):
+        return bool(self.raw.hasPermission(perm))
+
 def find_player(name: str):
     raw = _Bukkit.getPlayerExact(name)
     if raw is None:
