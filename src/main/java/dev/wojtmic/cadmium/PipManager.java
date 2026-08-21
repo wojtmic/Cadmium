@@ -64,7 +64,7 @@ public class PipManager {
             logger.info("pip already available.");
         } catch (IOException e) {
             logger.info("pip not found, bootstrapping via ensurepip...");
-            runProcess(
+            runProcessVisible(
                     java.util.Map.of(),
                     getGraalPyBinary().toString(), "-m", "ensurepip", "--upgrade"
             );
