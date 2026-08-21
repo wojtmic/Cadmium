@@ -33,7 +33,6 @@ public final class Cadmium extends JavaPlugin {
     public static File dataFolder;
     public static File pluginFile;
     public static String namespacePrefix = "cadmium";
-    public static String uvOverride = "auto";
     public static boolean autoSync = true;
 
     public void reload(boolean failFast, String entrypoint) {
@@ -59,11 +58,11 @@ public final class Cadmium extends JavaPlugin {
             context.close();
             context = null;
         }
-        UvManager uv = new UvManager(getLogger());
+        PipManager pip = new PipManager(getLogger());
         try {
-            uv.setup();
+            pip.setup();
         } catch (IOException | InterruptedException e) {
-            getComponentLogger().error("An exception occurred while setting up uv:");
+            getComponentLogger().error("An exception occurred while setting up pip:");
             getComponentLogger().error(e.toString());
             return;
         }
@@ -84,12 +83,13 @@ public final class Cadmium extends JavaPlugin {
                 .allowAllAccess(true)
                 .hostClassLoader(combinedLoader)
                 .allowHostClassLookup(className -> true)
+                .allowNativeAccess(true)
                 .build();
 
         try {
             Path dataFolder = getDataFolder().toPath().toAbsolutePath();
             context.eval("python", "import sys; sys.path.insert(0, '" + dataFolder + "')");
-            context.eval("python", "import sys; sys.path.insert(0, '" + uv.getBundledPython() + "')");
+            context.eval("python", "import sys; sys.path.insert(0, '" + pip.getBundledPython() + "')");
 
             context.getBindings("python").putMember("_command_manager", commandManager);
             context.getBindings("python").putMember("_plugin", this);
@@ -161,10 +161,7 @@ public final class Cadmium extends JavaPlugin {
                         description = "CHANGEME"
                         
                         requires-python = "==3.12.*" # DO NOT CHANGE THIS! Cadmium will ONLY work with Python 3.12
-                        dependencies = [] # Recommended to add dependencies with `uv add`
-                        
-                        [tool.uv]
-                        managed = true
+                        dependencies = []
                         
                         # main Cadmium configuration
                         # requires a server restart to reload
@@ -185,13 +182,6 @@ public final class Cadmium extends JavaPlugin {
                         # if disabled will not sync (manage dependencies) automatically
                         # default: true
                         auto-sync = true
-                        # path to the uv binary Cadmium will use to manage dependencies
-                        # set to "auto" to use a system-wide uv install, downloading a binary if none is found
-                        # set to "system" to always use a system-wide uv install (Cadmium will not load if not found)
-                        # set to "download" to always use a Cadmium-downloaded binary
-                        # set to an explicit path to force that binary (Cadmium will not load if it's not found)
-                        # default: auto
-                        uv-path = "auto"
                         # namespace used for script-registered commands, attributes, etc.
                         # (e.g. /<prefix>:<command>)
                         # default: cadmium
@@ -219,12 +209,10 @@ public final class Cadmium extends JavaPlugin {
         boolean cadCommand = toml.getBoolean("tool.cadmium.enable-cad-command", true);
         boolean autoSync = toml.getBoolean("tool.cadmium.auto-sync", true);
         String entrypoint = toml.getString("tool.cadmium.main-code", "main.py");
-        String uvOverride = toml.getString("tool.cadmium.uv-path", "auto");
         String namespacePrefix = toml.getString("tool.cadmium.namespace-prefix", "cadmium");
 
         Cadmium.namespacePrefix = namespacePrefix;
         Cadmium.autoSync = autoSync;
-        Cadmium.uvOverride = uvOverride;
 
         try {
             reload(failFast, entrypoint);

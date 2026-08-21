@@ -68,6 +68,19 @@ public class Utils {
         return output == null ? "" : output.trim();
     }
 
+    public static void runProcessVisible(java.util.Map<String, String> env, String... command) throws IOException, InterruptedException {
+        ProcessBuilder builder = new ProcessBuilder(command)
+                .directory(Cadmium.dataFolder)
+                .inheritIO();
+        builder.environment().putAll(env);
+        Process process = builder.start();
+
+        int exitCode = process.waitFor();
+        if (exitCode != 0) {
+            throw new IOException("Command failed (exit " + exitCode + "): " + String.join(" ", command));
+        }
+    }
+
 
     public static List<Audience> getReloadRecipients(String permission, Player exclude) {
         List<Audience> recipients = new ArrayList<>();
