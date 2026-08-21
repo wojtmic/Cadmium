@@ -9,11 +9,12 @@ Cadmium is a scripting plugin for Minecraft, much like [Skript](https://modrinth
 [![modrinth](https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/cozy/available/modrinth_vector.svg)](https://modrinth.com/plugin/cadmium-code)
 
 # Features
-Cadmium uses **Python 3.12** as its scripting layer, which allows for almost full (read Technicals) **suppport for PyPI packages**. On top, Paper/Bukkit API abstractions are provided, allowing for **Pythonic syntax to define Commands, hook into Events and more**.
+Cadmium uses **Python 3.12** as its scripting layer, which allows for almost full (read Packages) **suppport for PyPI packages**. On top, Paper/Bukkit API abstractions are provided, allowing for **Pythonic syntax to define Commands, hook into Events and more**.
 
 ## DISCLAIMER
-**ALL ABSTRACTIONS FOR PAPER APIS ARE NOT COMPLETE YET**<br>
-As of now, Cadmium is in **BETA**. Currently, Java reflection is gonna be required in most cases. Cadmium is **not production ready** yet. API coverage will increase with updates.
+**Cadmium is in beta**. This means you might see rough edges here and there, or missing features. Please file an Issue as a feature request in that case!
 
-### Technicals
-Cadmium runs on GraalVM/GraalPy. This means that some PyPI packages will not work, including `requests` (use `httpx` instead). A more comprehensive list is available [here](https://graalpy.org/python-developers/compatibility/).
+## Packages
+Cadmium runs on GraalVM/GraalPy. This means that some PyPI packages will not work. A comprehensive list is available [here](https://graalpy.org/python-developers/compatibility/).<br>
+From testing, generally speaking async libraries/drivers don't work and async might behave weirdly. However, pure-Python packages should load fine.
+
