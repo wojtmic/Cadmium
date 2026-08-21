@@ -9,6 +9,7 @@ import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import org.bukkit.entity.Player;
 import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.plugin.messaging.Messenger;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Source;
@@ -35,11 +36,24 @@ public final class Cadmium extends JavaPlugin {
     public static String namespacePrefix = "cadmium";
     public static boolean autoSync = true;
 
+    /**
+     * Drops every plugin message channel we registered. The listeners are Python
+     * callables bound to the polyglot context, so they must go before the context
+     * is closed - otherwise Bukkit keeps calling into a dead context and the
+     * re-registration guards in Python see the stale registration and skip.
+     */
+    private void unregisterPluginChannels() {
+        Messenger messenger = getServer().getMessenger();
+        messenger.unregisterIncomingPluginChannel(this);
+        messenger.unregisterOutgoingPluginChannel(this);
+    }
+
     public void reload(boolean failFast, String entrypoint) {
         if (bridge != null) {
             HandlerList.unregisterAll(bridge);
             bridge = null;
         }
+        unregisterPluginChannels();
         if (commandManager == null) {
             commandManager = new CommandManager(getLogger());
         } else {
@@ -313,6 +327,7 @@ public final class Cadmium extends JavaPlugin {
     @Override
     public void onDisable() {
         if (bridge != null) HandlerList.unregisterAll(bridge);
+        unregisterPluginChannels();
         if (coroutineScheduler != null) coroutineScheduler.shutdown();
         if (context != null) context.close();
     }

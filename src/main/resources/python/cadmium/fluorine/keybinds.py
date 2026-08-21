@@ -1,4 +1,5 @@
 import java
+import cadmium
 from cadmium.aio import wait_ticks
 
 _Bukkit = java.type("org.bukkit.Bukkit")
@@ -51,7 +52,7 @@ def _on_send_message(channel, player, raw_bytes):
     id, pressed = _decode_send(raw_bytes)
     handler = _handlers.get(id)
     if handler is not None:
-        handler(player, pressed)
+        handler(cadmium.Player(raw=player), pressed)
 
 def _register_channels():
     messenger = _Bukkit.getMessenger()
