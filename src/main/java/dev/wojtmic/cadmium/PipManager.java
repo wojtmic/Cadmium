@@ -3,11 +3,17 @@ package dev.wojtmic.cadmium;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.PosixFilePermission;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.jar.JarFile;
 import java.util.logging.Logger;
 
@@ -16,8 +22,13 @@ import static dev.wojtmic.cadmium.Utils.*;
 
 public class PipManager {
 
+    private static final String GRAALPY_VERSION = "25.2.4";
+    private static final String GRAALPY_BASE_URL =
+            "https://github.com/oracle/graalpython/releases/download/graal-" + GRAALPY_VERSION + "/";
+
     private final Logger logger;
     private Path bundledPython;
+    private Path graalPyHome; // the extracted standalone GraalPy distribution
 
     public PipManager(Logger logger) {
         this.logger = logger;
@@ -25,6 +36,23 @@ public class PipManager {
 
     public void setup() throws IOException, InterruptedException {
         bundledPython = extractBundledPython();
+
+        graalPyHome = Cadmium.dataFolder.toPath().resolve(".graalpy").toAbsolutePath();
+        if (!Files.exists(getBaseGraalPyBinary())) {
+            logger.info("No GraalPy distribution found, downloading...");
+            downloadAndExtractGraalPy();
+            logger.info("GraalPy downloaded.");
+        }
+
+        Path venv = getVenvPath();
+        if (!Files.exists(getVenvBinary())) {
+            logger.info("No venv found, creating one...");
+            runProcessVisible(
+                    java.util.Map.of(),
+                    getBaseGraalPyBinary().toString(), "-m", "venv", venv.toString()
+            );
+            logger.info("venv created.");
+        }
 
         logger.info("Ensuring pip is available...");
         ensurePip();
@@ -47,26 +75,30 @@ public class PipManager {
         return venv.resolve("Lib").resolve("site-packages");
     }
 
-    private Path getGraalPyBinary() {
-        Path venv = getVenvPath();
-        return venv.resolve(isWindows() ? "Scripts/graalpy.exe" : "bin/graalpy");
-    }
     public Path getBundledPython() {
         return bundledPython;
     }
 
+    private Path getVenvBinary() {
+        return getVenvPath().resolve(isWindows() ? "Scripts/graalpy.exe" : "bin/graalpy");
+    }
+
+    private Path getBaseGraalPyBinary() {
+        return graalPyHome.resolve(isWindows() ? "graalpy.exe" : "bin/graalpy");
+    }
+
     private void ensurePip() throws IOException, InterruptedException {
         try {
-            runProcess(
+            runProcessVisible(
                     java.util.Map.of(),
-                    getGraalPyBinary().toString(), "-m", "pip", "--version"
+                    getVenvBinary().toString(), "-m", "pip", "--version"
             );
             logger.info("pip already available.");
         } catch (IOException e) {
             logger.info("pip not found, bootstrapping via ensurepip...");
             runProcessVisible(
                     java.util.Map.of(),
-                    getGraalPyBinary().toString(), "-m", "ensurepip", "--upgrade"
+                    getVenvBinary().toString(), "-m", "ensurepip", "--upgrade"
             );
         }
     }
@@ -85,7 +117,7 @@ public class PipManager {
         }
 
         List<String> command = new ArrayList<>();
-        command.add(getGraalPyBinary().toString());
+        command.add(getVenvBinary().toString());
         command.add("-m");
         command.add("pip");
         command.add("install");
@@ -124,7 +156,64 @@ public class PipManager {
         return dest;
     }
 
-    private boolean isWindows() {
-        return System.getProperty("os.name").toLowerCase().contains("win");
+    private void downloadAndExtractGraalPy() throws IOException, InterruptedException {
+        String filename = getGraalPyAssetName();
+        String url = GRAALPY_BASE_URL + filename;
+
+        Files.createDirectories(graalPyHome);
+        Path tmp = Cadmium.dataFolder.toPath().resolve("graalpy_download_tmp");
+
+        HttpClient client = HttpClient.newBuilder()
+                .followRedirects(HttpClient.Redirect.ALWAYS)
+                .build();
+        HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).build();
+
+        try {
+            HttpResponse<InputStream> response = client.send(request, HttpResponse.BodyHandlers.ofInputStream());
+            if (response.statusCode() != 200) {
+                throw new IOException("Failed to download GraalPy (HTTP " + response.statusCode() + "): " + url);
+            }
+            try (InputStream body = response.body()) {
+                Files.copy(body, tmp, StandardCopyOption.REPLACE_EXISTING);
+            }
+
+            if (filename.endsWith(".zip")) {
+                extractZip(tmp, graalPyHome);
+            } else {
+                extractTarGz(tmp, graalPyHome);
+            }
+        } finally {
+            Files.deleteIfExists(tmp);
+        }
+
+        if (!isWindows()) {
+            makeExecutable(getBaseGraalPyBinary());
+        }
+    }
+
+    private String getGraalPyAssetName() {
+        String os = System.getProperty("os.name").toLowerCase();
+        String arch = System.getProperty("os.arch").toLowerCase();
+        boolean isArm = arch.contains("aarch64") || arch.contains("arm");
+
+        if (os.contains("win")) {
+            return "graalpy3.12-" + GRAALPY_VERSION + "-windows-amd64.zip";
+        } else if (os.contains("mac") || os.contains("darwin")) {
+            return "graalpy3.12-" + GRAALPY_VERSION + "-macos-" + (isArm ? "aarch64" : "amd64") + ".tar.gz";
+        } else {
+            return "graalpy3.12-" + GRAALPY_VERSION + "-linux-" + (isArm ? "aarch64" : "amd64") + ".tar.gz";
+        }
+    }
+
+    private void makeExecutable(Path path) throws IOException {
+        Files.setPosixFilePermissions(path, Set.of(
+                PosixFilePermission.OWNER_READ,
+                PosixFilePermission.OWNER_WRITE,
+                PosixFilePermission.OWNER_EXECUTE,
+                PosixFilePermission.GROUP_READ,
+                PosixFilePermission.GROUP_EXECUTE,
+                PosixFilePermission.OTHERS_READ,
+                PosixFilePermission.OTHERS_EXECUTE
+        ));
     }
 }
