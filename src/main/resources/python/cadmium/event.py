@@ -485,6 +485,10 @@ class EntityDamageEvent(_CancellableMixin):
         return entity_from_raw(self.raw.getEntity())
 
     @property
+    def player(self) -> Player:
+        return self.entity
+
+    @property
     def damage(self) -> float:
         return self.raw.getDamage()
 
