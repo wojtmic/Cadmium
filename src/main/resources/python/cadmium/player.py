@@ -36,6 +36,27 @@ class Player(LivingEntity):
     def tab_name(self, value: str):
         self.raw.playerListName(mm(value))
 
+    @property
+    def tab_header(self) -> str:
+        from cadmium.utils import serialize_mini_message
+        return serialize_mini_message(self.raw.playerListHeader())
+
+    @tab_header.setter
+    def tab_header(self, value: str):
+        self.raw.sendPlayerListHeaderAndFooter(mm(value), self.raw.playerListFooter())
+
+    @property
+    def tab_footer(self) -> str:
+        from cadmium.utils import serialize_mini_message
+        return serialize_mini_message(self.raw.playerListFooter())
+
+    @tab_footer.setter
+    def tab_footer(self, value: str):
+        self.raw.sendPlayerListHeaderAndFooter(self.raw.playerListHeader(), mm(value))
+
+    def set_tab_header_footer(self, header: str, footer: str):
+        self.raw.sendPlayerListHeaderAndFooter(mm(header), mm(footer))
+
     def kick(self, msg: str = 'Kicked by an operator.'):
         self.raw.kick(mm(msg))
 
