@@ -5,6 +5,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.inventory.InventoryClickEvent;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
@@ -126,5 +127,10 @@ public class Bridge implements Listener {
     @EventHandler
     public void onPlayerGameModeChange(PlayerGameModeChangeEvent event) {
         dispatch("player_gamemode_change", event);
+    }
+
+    @EventHandler
+    public void onInventoryClick(InventoryClickEvent event) {
+        dispatch("inventory_click", event);
     }
 }

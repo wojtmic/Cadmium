@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Union
 from cadmium.player import Player, GameMode
 from cadmium.entity import Entity, entity_from_raw
-from cadmium.inventory import itemstack_from
+from cadmium.inventory import itemstack_from, Inventory
 from cadmium.vector import Vector, vector_from
 from cadmium.location import Location, location_from
 from cadmium.block import block_from
@@ -29,6 +29,7 @@ if TYPE_CHECKING:
         JPlayerInteractEntityEvent,
         JAsyncChatEvent,
         JPlayerMoveEvent,
+        JInventoryClickEvent,
     )
 
 def _wrap_player(raw):
@@ -659,3 +660,77 @@ class PlayerInteractEvent(_CancellableMixin):
 
     def __repr__(self):
         return f"PlayerInteractEvent({self.player}, {self.action})"
+
+@dataclass
+class InventoryClickEvent(_CancellableMixin):
+    raw: "JInventoryClickEvent"
+    _cancel_window_closed: bool = field(default=False, init=False, repr=False)
+
+    @property
+    def player(self) -> Player:
+        return Player(raw=self.raw.getWhoClicked())
+
+    @property
+    def inventory(self) -> Inventory:
+        return Inventory(raw=self.raw.getInventory())
+
+    @property
+    def clicked_inventory(self) -> Union[Inventory, None]:
+        inv = self.raw.getClickedInventory()
+        return Inventory(raw=inv) if inv is not None else None
+
+    @property
+    def slot(self) -> int:
+        return self.raw.getSlot()
+
+    @property
+    def raw_slot(self) -> int:
+        return self.raw.getRawSlot()
+
+    @property
+    def slot_type(self):
+        return self.raw.getSlotType()
+
+    @property
+    def current_item(self):
+        item = self.raw.getCurrentItem()
+        return itemstack_from(item) if item is not None else None
+
+    @current_item.setter
+    def current_item(self, value):
+        self.raw.setCurrentItem(value.raw if value is not None else None)
+
+    @property
+    def cursor(self):
+        item = self.raw.getCursor()
+        return itemstack_from(item) if item is not None else None
+
+    @property
+    def click_type(self):
+        return self.raw.getClick()
+
+    @property
+    def action(self):
+        return self.raw.getAction()
+
+    @property
+    def hotbar_button(self) -> int:
+        return self.raw.getHotbarButton()
+
+    @property
+    def is_shift_click(self) -> bool:
+        return self.raw.isShiftClick()
+
+    @property
+    def is_right_click(self) -> bool:
+        return self.raw.isRightClick()
+
+    @property
+    def is_left_click(self) -> bool:
+        return self.raw.isLeftClick()
+
+    def cancel(self):
+        self._guarded_cancel()
+
+    def __repr__(self):
+        return f"InventoryClickEvent(slot={self.slot}, action={self.action})"

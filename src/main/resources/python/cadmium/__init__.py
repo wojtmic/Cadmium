@@ -16,6 +16,7 @@ from cadmium._async import is_async_callable
 from cadmium.vector import *
 from cadmium.server import *
 from cadmium.world import *
+from cadmium.team import *
 import builtins
 
 class EVENTS(Enum):
@@ -33,6 +34,7 @@ class EVENTS(Enum):
     player_move = "player_move"
     item_damage_event = "entity_damage_item_event"
     player_interact = "player_interact"
+    inventory_click = "inventory_click"
     command = "command"
     entity_spawn = "entity_spawn"
     player_fish = "player_fish"
@@ -66,7 +68,8 @@ _event_classes = {
     EVENTS.chat: ChatEvent,
     EVENTS.player_move: PlayerMoveEvent,
     EVENTS.item_damage_event: EntityDamageEvent,
-    EVENTS.player_interact: PlayerInteractEvent
+    EVENTS.player_interact: PlayerInteractEvent,
+    EVENTS.inventory_click: InventoryClickEvent
 }
 
 def _has_coroutine_manager():

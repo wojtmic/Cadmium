@@ -274,6 +274,14 @@ class Inventory:
     def size(self) -> int:
         return self.raw.getSize()
 
+    @property
+    def title(self) -> str | None:
+        for viewer in self.raw.getViewers():
+            view = viewer.getOpenInventory()
+            if view.getTopInventory() == self.raw:
+                return serialize_mini_message(view.title())
+        return None
+
     def get_item(self, slot: int) -> ItemStack:
         return itemstack_from(self.raw.getItem(slot))
 

@@ -22,6 +22,10 @@ public class StubDumper {
             "org.bukkit.entity.LivingEntity",
             "org.bukkit.entity.Player",
             "org.bukkit.event.inventory.InventoryType",
+            "org.bukkit.scoreboard.Team",
+            "org.bukkit.scoreboard.Team$Option",
+            "org.bukkit.scoreboard.Team$OptionStatus",
+            "org.bukkit.scoreboard.NameTagVisibility",
             "org.bukkit.inventory.EquipmentSlotGroup",
             "org.bukkit.inventory.ItemFlag",
             "org.bukkit.inventory.ItemStack",
@@ -52,6 +56,7 @@ public class StubDumper {
             "org.bukkit.event.player.PlayerGameModeChangeEvent",
             "org.bukkit.event.block.BlockBreakEvent",
             "org.bukkit.event.block.BlockPlaceEvent",
+            "org.bukkit.event.inventory.InventoryClickEvent",
     };
 
     public static void dump(String outputPath) throws IOException {
