@@ -36,12 +36,6 @@ public final class Cadmium extends JavaPlugin {
     public static String namespacePrefix = "cadmium";
     public static boolean autoSync = true;
 
-    /**
-     * Drops every plugin message channel we registered. The listeners are Python
-     * callables bound to the polyglot context, so they must go before the context
-     * is closed - otherwise Bukkit keeps calling into a dead context and the
-     * re-registration guards in Python see the stale registration and skip.
-     */
     private void unregisterPluginChannels() {
         Messenger messenger = getServer().getMessenger();
         messenger.unregisterIncomingPluginChannel(this);
@@ -200,6 +194,24 @@ public final class Cadmium extends JavaPlugin {
                         # (e.g. /<prefix>:<command>)
                         # default: cadmium
                         namespace-prefix = "cadmium"
+
+                        # optional: sync your script sources from a git repository on startup
+                        # runs once, before pip dependency sync, using a pure-Java git implementation
+                        # (no system git binary required)
+                        #[tool.cadmium.git]
+                        # default: true (only matters if this table is present)
+                        #enabled = true
+                        #url = "https://github.com/you/your-scripts.git"
+                        # branch to clone/checkout; default: repo's default branch
+                        #branch = "main"
+                        # where to clone into, relative to the plugin data folder
+                        # default: "." (the data folder itself)
+                        #directory = "."
+                        #username = "your-username"
+                        # any value starting with "$" is resolved from an environment
+                        # variable of that name at load time - use this for secrets
+                        # instead of committing them here
+                        #password = "$CADMIUM_GIT_PASSWORD"
                         """;
 
                 try {
@@ -227,6 +239,16 @@ public final class Cadmium extends JavaPlugin {
 
         Cadmium.namespacePrefix = namespacePrefix;
         Cadmium.autoSync = autoSync;
+
+        try {
+            new GitManager(getLogger()).setup();
+        } catch (IOException e) {
+            getComponentLogger().error("Git sync failed: " + e.getMessage());
+            if (failFast) {
+                getServer().shutdown();
+                return;
+            }
+        }
 
         try {
             reload(failFast, entrypoint);
@@ -298,6 +320,45 @@ public final class Cadmium extends JavaPlugin {
                             }
                             return 1;
                         });
+                var pullNode = Commands.literal("pull")
+                        .executes(ctx -> {
+                            Component msg1 = MiniMessage.miniMessage().deserialize("[<#FFD93D>Cadmium</#FFD93D>] <gold>Pulling...</gold>");
+                            ctx.getSource().getSender().sendMessage(msg1);
+
+                            long start = System.nanoTime();
+
+                            try {
+                                new GitManager(getLogger()).setup();
+                            } catch (java.io.IOException e) {
+                                getComponentLogger().error("Git pull failed: " + e.getMessage());
+                                Component msg = MiniMessage.miniMessage().deserialize(
+                                        "[<#FFD93D>Cadmium</#FFD93D>] <red>Pull failed!\n<traceback>",
+                                        Placeholder.unparsed("traceback", e.getMessage()));
+                                ctx.getSource().getSender().sendMessage(msg);
+                                return 0;
+                            }
+
+                            try {
+                                reload(failReload, entrypoint);
+                            } catch (RuntimeException e) {
+                                getComponentLogger().error(e.getMessage());
+                                Component msg = MiniMessage.miniMessage().deserialize(
+                                        "[<#FFD93D>Cadmium</#FFD93D>] <red>Pulled, but reload failed!\n<traceback>",
+                                        Placeholder.unparsed("traceback", e.getMessage()));
+                                ctx.getSource().getSender().sendMessage(msg);
+
+                                if (failReload) {
+                                    getServer().shutdown();
+                                }
+                                return 0;
+                            }
+
+                            long elapsed = (System.nanoTime() - start) / 1_000_000;
+                            Component msg2 = MiniMessage.miniMessage().deserialize(
+                                    "[<#FFD93D>Cadmium</#FFD93D>] <green>Pulled and reloaded in <gold>" + elapsed + "ms</gold>!");
+                            ctx.getSource().getSender().sendMessage(msg2);
+                            return 1;
+                        });
 
                 java.util.function.Predicate<io.papermc.paper.command.brigadier.CommandSourceStack> hasPerm =
                         source -> source.getSender().hasPermission("cadmium.admin");
@@ -307,6 +368,7 @@ public final class Cadmium extends JavaPlugin {
                                 .requires(hasPerm)
                                 .then(reloadNode)
                                 .then(dumpstubsNode)
+                                .then(pullNode)
                                 .build()
                 );
 
@@ -315,6 +377,7 @@ public final class Cadmium extends JavaPlugin {
                                 .requires(hasPerm)
                                 .then(reloadNode)
                                 .then(dumpstubsNode)
+                                .then(pullNode)
                                 .build()
                 );
             });

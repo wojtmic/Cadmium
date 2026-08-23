@@ -24,6 +24,8 @@ public class CadmiumLoader implements PluginLoader {
                 new DefaultArtifact("com.moandjiezana.toml:toml4j:0.7.2"), null));
         resolver.addDependency(new Dependency(
                 new DefaultArtifact("fr.mrmicky:fastboard:2.2.1"), null));
+        resolver.addDependency(new Dependency(
+                new DefaultArtifact("org.eclipse.jgit:org.eclipse.jgit:7.7.1.202607240634-r"), null));
 
         builder.addLibrary(resolver);
     }
