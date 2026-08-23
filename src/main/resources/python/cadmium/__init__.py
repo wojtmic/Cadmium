@@ -35,6 +35,8 @@ class EVENTS(Enum):
     item_damage_event = "entity_damage_item_event"
     player_interact = "player_interact"
     inventory_click = "inventory_click"
+    player_drop_item = "player_drop_item"
+    player_swap_hand_items = "player_swap_hand_items"
     command = "command"
     entity_spawn = "entity_spawn"
     player_fish = "player_fish"
@@ -69,7 +71,9 @@ _event_classes = {
     EVENTS.player_move: PlayerMoveEvent,
     EVENTS.item_damage_event: EntityDamageEvent,
     EVENTS.player_interact: PlayerInteractEvent,
-    EVENTS.inventory_click: InventoryClickEvent
+    EVENTS.inventory_click: InventoryClickEvent,
+    EVENTS.player_drop_item: PlayerDropItemEvent,
+    EVENTS.player_swap_hand_items: PlayerSwapHandItemsEvent
 }
 
 def _has_coroutine_manager():

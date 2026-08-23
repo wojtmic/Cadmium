@@ -57,6 +57,8 @@ public class StubDumper {
             "org.bukkit.event.block.BlockBreakEvent",
             "org.bukkit.event.block.BlockPlaceEvent",
             "org.bukkit.event.inventory.InventoryClickEvent",
+            "org.bukkit.event.player.PlayerDropItemEvent",
+            "org.bukkit.event.player.PlayerSwapHandItemsEvent",
     };
 
     public static void dump(String outputPath) throws IOException {

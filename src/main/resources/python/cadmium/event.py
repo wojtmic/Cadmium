@@ -30,6 +30,8 @@ if TYPE_CHECKING:
         JAsyncChatEvent,
         JPlayerMoveEvent,
         JInventoryClickEvent,
+        JPlayerDropItemEvent,
+        JPlayerSwapHandItemsEvent,
     )
 
 def _wrap_player(raw):
@@ -734,3 +736,61 @@ class InventoryClickEvent(_CancellableMixin):
 
     def __repr__(self):
         return f"InventoryClickEvent(slot={self.slot}, action={self.action})"
+
+@dataclass
+class PlayerDropItemEvent(_CancellableMixin):
+    raw: "JPlayerDropItemEvent"
+    _cancel_window_closed: bool = field(default=False, init=False, repr=False)
+
+    @property
+    def player(self) -> Player:
+        return Player(raw=self.raw.getPlayer())
+
+    @property
+    def entity(self):
+        from cadmium.entity import entity_from_raw
+        return entity_from_raw(self.raw.getItemDrop())
+
+    @property
+    def item(self):
+        item = self.raw.getItemDrop().getItemStack()
+        return itemstack_from(item) if item is not None else None
+
+    def cancel(self):
+        self._guarded_cancel()
+
+    def __repr__(self):
+        return f"PlayerDropItemEvent({self.player}, {self.item})"
+
+@dataclass
+class PlayerSwapHandItemsEvent(_CancellableMixin):
+    raw: "JPlayerSwapHandItemsEvent"
+    _cancel_window_closed: bool = field(default=False, init=False, repr=False)
+
+    @property
+    def player(self) -> Player:
+        return Player(raw=self.raw.getPlayer())
+
+    @property
+    def main_hand_item(self):
+        item = self.raw.getMainHandItem()
+        return itemstack_from(item) if item is not None else None
+
+    @main_hand_item.setter
+    def main_hand_item(self, value):
+        self.raw.setMainHandItem(value.raw if value is not None else None)
+
+    @property
+    def offhand_item(self):
+        item = self.raw.getOffHandItem()
+        return itemstack_from(item) if item is not None else None
+
+    @offhand_item.setter
+    def offhand_item(self, value):
+        self.raw.setOffHandItem(value.raw if value is not None else None)
+
+    def cancel(self):
+        self._guarded_cancel()
+
+    def __repr__(self):
+        return f"PlayerSwapHandItemsEvent({self.player})"
