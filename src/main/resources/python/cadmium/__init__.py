@@ -41,6 +41,9 @@ class EVENTS(Enum):
     entity_spawn = "entity_spawn"
     player_fish = "player_fish"
     player_gamemode_change = "player_gamemode_change"
+    projectile_hit = "projectile_hit"
+    block_physics = "block_physics"
+    advancement_done = "advancement_done"
 
 _registry: dict[EVENTS, list] = {}
 
@@ -73,7 +76,10 @@ _event_classes = {
     EVENTS.player_interact: PlayerInteractEvent,
     EVENTS.inventory_click: InventoryClickEvent,
     EVENTS.player_drop_item: PlayerDropItemEvent,
-    EVENTS.player_swap_hand_items: PlayerSwapHandItemsEvent
+    EVENTS.player_swap_hand_items: PlayerSwapHandItemsEvent,
+    EVENTS.projectile_hit: ProjectileHitEvent,
+    EVENTS.block_physics: BlockPhysicsEvent,
+    EVENTS.advancement_done: PlayerAdvancementDoneEvent
 }
 
 def _has_coroutine_manager():

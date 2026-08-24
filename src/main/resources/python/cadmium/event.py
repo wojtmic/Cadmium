@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Union
 from cadmium.player import Player, GameMode
 from cadmium.entity import Entity, entity_from_raw
-from cadmium.inventory import itemstack_from, Inventory
+from cadmium.inventory import itemstack_from, Inventory, ItemStack
 from cadmium.vector import Vector, vector_from
 from cadmium.location import Location, location_from
 from cadmium.block import block_from
@@ -32,6 +32,9 @@ if TYPE_CHECKING:
         JInventoryClickEvent,
         JPlayerDropItemEvent,
         JPlayerSwapHandItemsEvent,
+        JProjectileHitEvent,
+        JBlockPhysicsEvent,
+        JPlayerAdvancementDoneEvent,
     )
 
 def _wrap_player(raw):
@@ -794,3 +797,81 @@ class PlayerSwapHandItemsEvent(_CancellableMixin):
 
     def __repr__(self):
         return f"PlayerSwapHandItemsEvent({self.player})"
+
+@dataclass
+class ProjectileHitEvent(_CancellableMixin):
+    raw: "JProjectileHitEvent"
+    _cancel_window_closed: bool = field(default=False, init=False, repr=False)
+
+    @property
+    def entity(self) -> Union[Player, "LivingEntity", Entity, None]:
+        return entity_from_raw(self.raw.getEntity())
+
+    @property
+    def hit_entity(self) -> Union[Player, "LivingEntity", Entity, None]:
+        hit = self.raw.getHitEntity()
+        return entity_from_raw(hit) if hit is not None else None
+
+    @property
+    def hit_block(self):
+        block = self.raw.getHitBlock()
+        return block_from(block) if block is not None else None
+
+    @property
+    def hit_face(self):
+        return self.raw.getHitBlockFace()
+
+    def cancel(self):
+        self._guarded_cancel()
+
+    def __repr__(self):
+        return f"ProjectileHitEvent({self.entity})"
+
+@dataclass
+class BlockPhysicsEvent(_CancellableMixin):
+    raw: "JBlockPhysicsEvent"
+    _cancel_window_closed: bool = field(default=False, init=False, repr=False)
+
+    @property
+    def block(self):
+        return block_from(self.raw.getBlock())
+
+    @property
+    def changed_type(self):
+        return self.raw.getChangedType()
+
+    @property
+    def source_block(self):
+        return block_from(self.raw.getSourceBlock())
+
+    def cancel(self):
+        self._guarded_cancel()
+
+    def __repr__(self):
+        return f"BlockPhysicsEvent({self.block})"
+
+@dataclass
+class PlayerAdvancementDoneEvent:
+    raw: "JPlayerAdvancementDoneEvent"
+
+    @property
+    def player(self) -> Player:
+        return Player(raw=self.raw.getPlayer())
+
+    @property
+    def key(self) -> str:
+        return self.raw.getAdvancement().getKey().toString()
+
+    @property
+    def message(self) -> Union[str, None]:
+        from cadmium.utils import serialize_mini_message
+        message = self.raw.message()
+        return serialize_mini_message(message) if message is not None else None
+
+    @message.setter
+    def message(self, value: Union[str, None]):
+        from cadmium.utils import mm
+        self.raw.message(mm(value) if value is not None else None)
+
+    def __repr__(self):
+        return f"PlayerAdvancementDoneEvent({self.player}, {self.key})"

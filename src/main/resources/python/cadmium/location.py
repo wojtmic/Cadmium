@@ -51,6 +51,14 @@ class Location:
     def west(self, n: float = 1.0) -> "Location":
         return Location(self.x - n, self.y, self.z, self.yaw, self.pitch, self.world)
 
+    def forward(self, vector: "Vector", ignore_blocks: bool = True) -> "Location":
+        if not ignore_blocks and self.world is not None:
+            hit = self.world.raw.rayTraceBlocks(self.raw, vector.raw, vector.length)
+            if hit is not None:
+                pos = hit.getHitPosition()
+                return Location(pos.getX(), pos.getY(), pos.getZ(), self.yaw, self.pitch, self.world)
+        return Location(self.x + vector.x, self.y + vector.y, self.z + vector.z, self.yaw, self.pitch, self.world)
+
     def explode(self, power: float = 4.0, set_fire: bool = False, break_blocks: bool = True) -> bool:
         return self.world.raw.createExplosion(self.x, self.y, self.z, power, set_fire, break_blocks)
 

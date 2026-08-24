@@ -1,6 +1,6 @@
 import math
 from dataclasses import dataclass
-from cadmium.location import Location
+from cadmium.location import Location, location_from
 from cadmium.shape.base import Shape
 
 

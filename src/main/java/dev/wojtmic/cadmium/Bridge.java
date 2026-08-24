@@ -4,6 +4,7 @@ import io.papermc.paper.event.entity.EntityDamageItemEvent;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockPhysicsEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
@@ -13,6 +14,7 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntitySpawnEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.event.player.*;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Value;
@@ -144,5 +146,20 @@ public class Bridge implements Listener {
     @EventHandler
     public void onPlayerSwapHandItems(PlayerSwapHandItemsEvent event) {
         dispatch("player_swap_hand_items", event);
+    }
+
+    @EventHandler
+    public void onProjectileHit(ProjectileHitEvent event) {
+        dispatch("projectile_hit", event);
+    }
+
+    @EventHandler
+    public void onBlockPhysics(BlockPhysicsEvent event) {
+        dispatch("block_physics", event);
+    }
+
+    @EventHandler
+    public void onPlayerAdvancementDone(PlayerAdvancementDoneEvent event) {
+        dispatch("advancement_done", event);
     }
 }
